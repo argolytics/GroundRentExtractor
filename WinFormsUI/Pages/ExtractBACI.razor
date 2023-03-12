@@ -1,0 +1,30 @@
+﻿@page "/extractBACI"
+@using DataLibrary.Services
+
+@inject BACIExtractor baciExtractor
+
+<div class="row mb-3 mt-3">
+    <div class="container">
+        <div>
+            <EditForm Model="@AmountToExtract">
+                <label>Amount</label>
+                <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
+            </EditForm>
+            <button class="btn btn-primary" type="submit" @onclick="() => Extract(AmountToExtract)">Extract</button>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private int AmountToExtract { get; set; }
+    private async Task Extract(int amountToExtract)
+    {
+        await baciExtractor.Extract(AmountToExtract);
+    }
+    protected override Task OnInitializedAsync()
+    {
+        AmountToExtract = 500;
+        return base.OnInitializedAsync();
+    }
+}
