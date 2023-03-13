@@ -6,6 +6,7 @@ using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using Azure.Storage.Blobs;
+using DataLibrary.Settings;
 
 namespace DataLibrary.Services;
 
@@ -18,8 +19,6 @@ public class BACIExtractor
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
-    public string FirefoxDriverPath = "";
-    public string FirefoxProfile = "";
     private readonly string BACIDropDownSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)";
     private readonly string PropertyAccountIdentifierSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)";
     private readonly string ContinueClick = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue";
@@ -56,20 +55,21 @@ public class BACIExtractor
         IDataContext dataContext,
         BlobService blobService,
         BACIDataServiceFactory baciDataServiceFactory,
-        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory)
+        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
+        DriverPathSettings pathSettings)
     {
         _dataContext = dataContext;
         _blobService = blobService;
         _baciDataServiceFactory = baciDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
-        FirefoxProfile firefoxProfile = new(FirefoxProfile);
+        FirefoxProfile firefoxProfile = new(pathSettings.FirefoxProfilePath);
         FirefoxOptions FirefoxOptions = new()
         {
             Profile = firefoxProfile,
         };
         //firefoxOptions.AddArguments("--headless");
-        FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
+        FirefoxDriver = new FirefoxDriver(pathSettings.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
         WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
         WebDriverWait.IgnoreExceptionTypes(
             typeof(NoSuchElementException),

@@ -1,6 +1,8 @@
 ﻿@page "/settings"
+@using DataLibrary.Settings;
 @using Microsoft.AspNetCore.Components.Forms;
 @using Microsoft.AspNetCore.Components.Web
+@inject DriverPathSettings pathSettings
 
 <PageTitle>Settings</PageTitle>
 <div class="row mb-3 mt-3">
@@ -9,22 +11,22 @@
             <label>Upload Geckodriver executable here</label>
             <br />
             <button class="btn btn-primary" @onclick="LoadGeckodriver">Select Geckodriver</button>
-            <label>@GeckodriverFilePath</label>
+            <label>@pathSettings.GeckoDriverPath</label>
         </div>
         <div>
             <label>Upload Firefox Profile folder here</label>
             <br />
             <button class="btn btn-primary" @onclick="LoadFirefoxProfile">Select Firefox Profile</button>
-            <label>@FirefoxProfilePath</label>
+            <label>@pathSettings.FirefoxProfilePath</label>
         </div>
     </div>
-    @if(GeckodriverFilePath is not null)
+    @if(pathSettings.GeckoDriverPath is not null)
     {
         <div>
             <p>Geckodriver path uploaded!</p>
         </div>
     }
-    @if (FirefoxProfilePath is not null)
+    @if (pathSettings.FirefoxProfilePath is not null)
     {
         <div>
             <p>Firefox profile path uploaded!</p>
@@ -43,8 +45,6 @@
 </div>
 
 @code {
-    public static string? GeckodriverFilePath;
-    public static string? FirefoxProfilePath;
     private List<string> ErrorsList = new();
 
     private void LoadGeckodriver()
@@ -56,7 +56,7 @@
         DialogResult res = openFileDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            GeckodriverFilePath = openFileDialog.FileName; 
+            pathSettings.GeckoDriverPath = openFileDialog.FileName; 
         }
         else
         {
@@ -71,7 +71,7 @@
         DialogResult res = folderBrowserDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            FirefoxProfilePath = folderBrowserDialog.SelectedPath;
+            pathSettings.FirefoxProfilePath = folderBrowserDialog.SelectedPath;
         }
         else
         {

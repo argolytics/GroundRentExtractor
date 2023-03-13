@@ -6,6 +6,7 @@ using DataLibrary.DbServices;
 using DataLibrary.Services;
 using DataLibrary.AutoMapperProfiles;
 using AutoMapper;
+using DataLibrary.Settings;
 
 namespace WinFormsUI;
 
@@ -24,6 +25,7 @@ public partial class Main : Form
         services.AddTransient<ExceptionLogDataServiceFactory>();
         services.AddTransient<BACIDataServiceFactory>();
         services.AddTransient<BACIExtractor>();
+        services.AddSingleton<DriverPathSettings>();
         services.AddAutoMapper(typeof(DataLibrary.AutoMapperEntryPoint).Assembly);
         var mapper = new MapperConfiguration(options =>
         {
