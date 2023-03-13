@@ -35,7 +35,7 @@ public class BACISqlDataService : IExtractorDataService
             };
             var dynParms = new DynamicParameters(parms);
             dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateAddress", dynParms,
+            await _unitOfWork.Connection.ExecuteAsync("spBACI_CreateAddress", dynParms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
             addressModel.Id = dynParms.Get<int>("Id");
             return true;
@@ -66,7 +66,7 @@ public class BACISqlDataService : IExtractorDataService
                 addressModel.PdfCount,
                 addressModel.AllDataDownloaded
             };
-            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_UpdateAddress", parms,
+            await _unitOfWork.Connection.ExecuteAsync("spBACI_UpdateAddress", parms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
             return true;
         }
@@ -95,7 +95,7 @@ public class BACISqlDataService : IExtractorDataService
             };
             var dynParms = new DynamicParameters(parms);
             dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_CreateOrUpdateGroundRentPdf", dynParms,
+            await _unitOfWork.Connection.ExecuteAsync("spBACI_CreateGroundRentPdf", dynParms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
             groundRentPdfModel.Id = dynParms.Get<int>("Id");
             return true;
@@ -123,7 +123,7 @@ public class BACISqlDataService : IExtractorDataService
                 groundRentPdfModel.ClerkInitials,
                 groundRentPdfModel.YearRecorded
             };
-            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_UpdateGroundRentPdf", parms,
+            await _unitOfWork.Connection.ExecuteAsync("spBACI_UpdateGroundRentPdf", parms,
                 commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
             return true;
         }
@@ -135,13 +135,13 @@ public class BACISqlDataService : IExtractorDataService
     }
     public async Task<List<AddressModel>> ReadAddressTopAmountWhereIsGroundRentNull(int amount)
     {
-        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBaltimoreCity_ReadAddressTopAmountWhereIsGroundRentNull",
+        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBACI_ReadAddressTopAmountWhereIsGroundRentNull",
             new { Amount = amount },
             commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
     }
     public async Task<List<AddressModel>> ReadAddressTopAmountWhereIsGroundRentTrue(int amount)
     {
-        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBaltimoreCity_ReadAddressTopAmountWhereIsGroundRentTrue",
+        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBACI_ReadAddressTopAmountWhereIsGroundRentTrue",
             new { Amount = amount },
             commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
     }
@@ -149,7 +149,7 @@ public class BACISqlDataService : IExtractorDataService
     {
         try
         {
-            await _unitOfWork.Connection.ExecuteAsync("spBaltimoreCity_DeleteAddress", new { AccountId = accountId },
+            await _unitOfWork.Connection.ExecuteAsync("spBACI_DeleteAddress", new { AccountId = accountId },
             commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
             return true;
         }
