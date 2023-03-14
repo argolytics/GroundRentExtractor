@@ -21,12 +21,13 @@ public partial class Main : Form
         services.AddSingleton<IConfiguration>(_ => Program.Configuration);
         services.AddSingleton<IDataContext>(new DataContext(azureSqlDbConnectionString));
         services.AddSingleton(new BlobService(azureBlobStorageConnectionString));
+        services.Configure<DriverPathSettings>(Program.Configuration.GetSection("DriverPathSettings"));
+        services.Configure<BlobSettings>(Program.Configuration.GetSection("BlobSettings"));
         services.AddWindowsFormsBlazorWebView();
         services.AddBlazorWebViewDeveloperTools();
         services.AddTransient<ExceptionLogDataServiceFactory>();
         services.AddTransient<BACIDataServiceFactory>();
         services.AddTransient<BACIExtractor>();
-        services.Configure<DriverPathSettings>(Program.Configuration.GetSection("DriverPathSettings"));
         services.AddAutoMapper(typeof(DataLibrary.AutoMapperEntryPoint).Assembly);
         var mapper = new MapperConfiguration(options =>
         {

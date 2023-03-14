@@ -1,69 +1,19 @@
 ﻿using DataLibrary.Models;
-using Dapper;
-using System.Data;
 using DataLibrary.DbAccess;
+using Dapper;
 
 namespace DataLibrary.DbServices;
 
 public class BACISqlDataService : IExtractorDataService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private const string _CreateAddressSql = @"INSERT INTO dbo.[BACI]([AccountId],[County], [AccountNumber], [Ward], [Section], [Block],
-                                                                [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], 
-                                                                [PdfCount], [AllDataDownloaded])
-                                    VALUES( @AccountId, @County, @AccountNumber, @Ward, @Section, @Block, @Lot,
-                                            @LandUseCode, @YearBuilt, @IsGroundRent, @IsRedeemed, @PdfCount, @AllDataDownloaded);
-
-	                                SELECT CAST(SCOPE_IDENTITY() AS INT);";
-
-    private const string _UpdateAddressSql = @"	UPDATE dbo.[BACI] 
-                                                SET
-                                                [AccountId] = @AccountId,
-                                                [County] = @County,
-                                                [AccountNumber] = @AccountNumber,
-                                                [Ward] = @Ward,
-                                                [Section] = @Section,
-                                                [Block] = @Block,
-                                                [Lot] = @Lot,
-                                                [LandUseCode] = @LandUseCode,
-                                                [YearBuilt] = @YearBuilt,
-                                                [IsGroundRent] = @IsGroundRent,
-                                                [IsRedeemed] = @IsRedeemed,
-                                                [PdfCount] = @PdfCount,
-                                                [AllDataDownloaded] = @AllDataDownloaded
-                                                WHERE [AccountId] = @AccountId";
-
+    private const string _CreateAddressSql = @"INSERT INTO dbo.[BACI] ([AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded]) VALUES (@AccountId, @County, @AccountNumber, @Ward, @Section, @Block, @Lot, @LandUseCode, @YearBuilt, @IsGroundRent, @IsRedeemed, @PdfCount, @AllDataDownloaded); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+    private const string _UpdateAddressSql = @"UPDATE dbo.[BACI] SET [AccountId] = @AccountId, [County] = @County, [AccountNumber] = @AccountNumber, [Ward] = @Ward, [Section] = @Section, [Block] = @Block, [Lot] = @Lot, [LandUseCode] = @LandUseCode, [YearBuilt] = @YearBuilt, [IsGroundRent] = @IsGroundRent, [IsRedeemed] = @IsRedeemed, [PdfCount] = @PdfCount, [AllDataDownloaded] = @AllDataDownloaded WHERE [AccountId] = @AccountId";
     private const string _DeleteAddressSql = @"DELETE FROM dbo.[BACI] WHERE AccountId = @AccountId;";
-
-    private const string _SelectAddressGroundRentNull = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section],
-                                                            [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded]
-                                                            FROM dbo.[BACI] where [IsGroundRent] is null";
-
-    private const string _SelectAddressGroundRentTrue = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section],
-                                                            [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded]
-                                                            FROM dbo.[BACI] where [IsGroundRent] = 1";
-
-    private const string _CreateGroundRentPdfSql = @"INSERT INTO dbo.[BACIGroundRentPdf](
-                                                        [AddressId], [AccountId], [DocumentFiledType], [AcknowledgementNumber], [DateTimeFiled], 
-                                                        [PdfPageCount], [Book], [Page], [ClerkInitials], [YearRecorded])
-                                                    VALUES(
-                                                        @AddressId, @AccountId, @DocumentFiledType, @AcknowledgementNumber, @DateTimeFiled, 
-                                                        @PdfPageCount, @Book, @Page, @ClerkInitials, @YearRecorded); 
-
-                                                    SELECT CAST(SCOPE_IDENTITY() AS INT);";
-
-    private const string _UpdateGroundRentPdfSql = @"UPDATE dbo.[BACIGroundRentPdf] SET
-                                                        [AccountId] = @AccountId, 
-                                                        [AddressId] = @AddressId, 
-                                                        [DocumentFiledType] = @DocumentFiledType, 
-                                                        [AcknowledgementNumber] = @AcknowledgementNumber, 
-                                                        [DateTimeFiled] = @DateTimeFiled, 
-                                                        [PdfPageCount] = @PdfPageCount, 
-                                                        [Book] = @Book, 
-                                                        [Page] = @Page, 
-                                                        [ClerkInitials] = @ClerkInitials, 
-                                                        [YearRecorded] = @YearRecorded
-                                                        WHERE [AccountId] = @AccountId AND [DateTimeFiled] = @DateTimeFiled";
+    private const string _SelectAddressGroundRentNull = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded] FROM dbo.[BACI] where [IsGroundRent] is null";
+    private const string _SelectAddressGroundRentTrue = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded] FROM dbo.[BACI] where [IsGroundRent] = 1";
+    private const string _CreateGroundRentPdfSql = @"INSERT INTO dbo.[BACIGroundRentPdf] ([AddressId], [AccountId], [DocumentFiledType], [AcknowledgementNumber], [DateTimeFiled], [PdfPageCount], [Book], [Page], [ClerkInitials], [YearRecorded]) VALUES (@AddressId, @AccountId, @DocumentFiledType, @AcknowledgementNumber, @DateTimeFiled, @PdfPageCount, @Book, @Page, @ClerkInitials, @YearRecorded); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+    private const string _UpdateGroundRentPdfSql = @"UPDATE dbo.[BACIGroundRentPdf] SET [AccountId] = @AccountId, [AddressId] = @AddressId, [DocumentFiledType] = @DocumentFiledType, [AcknowledgementNumber] = @AcknowledgementNumber, [DateTimeFiled] = @DateTimeFiled, [PdfPageCount] = @PdfPageCount, [Book] = @Book, [Page] = @Page, [ClerkInitials] = @ClerkInitials, [YearRecorded] = @YearRecorded WHERE [AccountId] = @AccountId AND [DateTimeFiled] = @DateTimeFiled";
     public BACISqlDataService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;

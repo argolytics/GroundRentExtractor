@@ -1,22 +1,14 @@
-﻿using DataLibrary.Models;
-using Dapper;
-using System.Data;
+﻿using System.Data;
+using DataLibrary.Models;
 using DataLibrary.DbAccess;
+using Dapper;
 
 namespace DataLibrary.DbServices;
 
 public class ExceptionLogSqlDataService : IExceptionLogDataService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private const string _CreateExceptionLogSql = @"INSERT INTO dbo.[ExceptionLog](
-                                                        [AccountId],
-                                                        [Exception])
-                                                    VALUES(
-                                                        @AccountId,
-                                                        @Exception);
-
-                                                    SELECT CAST(SCOPE_IDENTITY() AS INT);";
-
+    private const string _CreateExceptionLogSql = @"INSERT INTO dbo.[ExceptionLog] ([AccountId], [Exception]) VALUES (@AccountId, @Exception); SELECT CAST(SCOPE_IDENTITY() AS INT);";
     private const string _DeleteExceptionLogSql = @"DELETE FROM dbo.[ExceptionLog] WHERE Id = @Id;";
     public ExceptionLogSqlDataService(IUnitOfWork unitOfWork)
     {

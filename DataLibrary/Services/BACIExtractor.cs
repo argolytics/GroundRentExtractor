@@ -15,6 +15,7 @@ public class BACIExtractor
 {
     private readonly IDataContext _dataContext;
     private readonly BlobService _blobService;
+    private readonly IOptionsMonitor<BlobSettings> _blobSettings;
     private readonly BACIDataServiceFactory _baciDataServiceFactory;
     private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     FirefoxDriver FirefoxDriver;
@@ -57,10 +58,12 @@ public class BACIExtractor
         BlobService blobService,
         BACIDataServiceFactory baciDataServiceFactory,
         ExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
-        IOptionsMonitor<DriverPathSettings> pathSettings)
+        IOptionsMonitor<DriverPathSettings> pathSettings,
+        IOptionsMonitor<BlobSettings> blobSettings)
     {
         _dataContext = dataContext;
         _blobService = blobService;
+        _blobSettings = blobSettings;
         _baciDataServiceFactory = baciDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
@@ -317,12 +320,12 @@ public class BACIExtractor
                                         FirefoxDriver.SwitchTo().Window(window);
                                         if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
                                         {
-                                            // Download pdf, store locally (change later to blob db)
+                                            // Upload pdf to blob storage
                                             PrintOptions printOptions = new();
                                             //FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
                                             var printDocument = FirefoxDriver.Print(printOptions);
                                             var pdfFileName = $"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
-                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, "BACI");
+                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.BACIContainer);
                                             if (dbTransactionResult is true) pdfDownloadCount++;
                                             if (dbTransactionResult is false)
                                             {
