@@ -7,6 +7,7 @@ using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using Azure.Storage.Blobs;
 using DataLibrary.Settings;
+using Microsoft.Extensions.Options;
 
 namespace DataLibrary.Services;
 
@@ -56,26 +57,30 @@ public class BACIExtractor
         BlobService blobService,
         BACIDataServiceFactory baciDataServiceFactory,
         ExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
-        DriverPathSettings pathSettings)
+        IOptionsMonitor<DriverPathSettings> pathSettings)
     {
         _dataContext = dataContext;
         _blobService = blobService;
         _baciDataServiceFactory = baciDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
-        FirefoxProfile firefoxProfile = new(pathSettings.FirefoxProfilePath);
-        FirefoxOptions FirefoxOptions = new()
+        if (!string.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) && !string.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
         {
-            Profile = firefoxProfile,
-        };
-        //firefoxOptions.AddArguments("--headless");
-        FirefoxDriver = new FirefoxDriver(pathSettings.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
-        WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
-        WebDriverWait.IgnoreExceptionTypes(
-            typeof(NoSuchElementException),
-            typeof(StaleElementReferenceException),
-            typeof(ElementNotSelectableException),
-            typeof(ElementNotVisibleException));
+            FirefoxProfile firefoxProfile = new(pathSettings.CurrentValue.FirefoxProfilePath);
+            FirefoxOptions FirefoxOptions = new()
+            {
+                Profile = firefoxProfile,
+            };
+            //firefoxOptions.AddArguments("--headless");
+            FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
+            WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
+            WebDriverWait.IgnoreExceptionTypes(
+                typeof(NoSuchElementException),
+                typeof(StaleElementReferenceException),
+                typeof(ElementNotSelectableException),
+                typeof(ElementNotVisibleException));
+                
+        }
     }
     private async Task RestartExtract(int amountToExtract)
     {

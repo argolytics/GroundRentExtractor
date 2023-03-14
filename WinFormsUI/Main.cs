@@ -18,6 +18,7 @@ public partial class Main : Form
         var azureSqlDbConnectionString = Program.Configuration.GetConnectionString("AzureSqlDb");
         var azureBlobStorageConnectionString = Program.Configuration.GetConnectionString("AzureBlobStorage");
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(_ => Program.Configuration);
         services.AddSingleton<IDataContext>(new DataContext(azureSqlDbConnectionString));
         services.AddSingleton(new BlobService(azureBlobStorageConnectionString));
         services.AddWindowsFormsBlazorWebView();
@@ -25,7 +26,7 @@ public partial class Main : Form
         services.AddTransient<ExceptionLogDataServiceFactory>();
         services.AddTransient<BACIDataServiceFactory>();
         services.AddTransient<BACIExtractor>();
-        services.AddSingleton<DriverPathSettings>();
+        services.Configure<DriverPathSettings>(Program.Configuration.GetSection("DriverPathSettings"));
         services.AddAutoMapper(typeof(DataLibrary.AutoMapperEntryPoint).Assembly);
         var mapper = new MapperConfiguration(options =>
         {
