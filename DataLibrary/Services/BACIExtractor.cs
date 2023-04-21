@@ -6,6 +6,8 @@ using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
 using Azure.Storage.Blobs;
+using DataLibrary.Settings;
+using Microsoft.Extensions.Options;
 
 namespace DataLibrary.Services;
 
@@ -13,13 +15,12 @@ public class BACIExtractor
 {
     private readonly IDataContext _dataContext;
     private readonly BlobService _blobService;
+    private readonly IOptionsMonitor<BlobSettings> _blobSettings;
     private readonly BACIDataServiceFactory _baciDataServiceFactory;
     private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
-    public string FirefoxDriverPath = "";
-    public string FirefoxProfile = "";
     private readonly string BACIDropDownSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlCounty > option:nth-child(4)";
     private readonly string PropertyAccountIdentifierSelect = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_ucSearchType_ddlSearchType > option:nth-child(3)";
     private readonly string ContinueClick = "#cphMainContentArea_ucSearchType_wzrdRealPropertySearch_StartNavigationTemplateContainerID_btnContinue";
@@ -56,26 +57,33 @@ public class BACIExtractor
         IDataContext dataContext,
         BlobService blobService,
         BACIDataServiceFactory baciDataServiceFactory,
-        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory)
+        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
+        IOptionsMonitor<DriverPathSettings> pathSettings,
+        IOptionsMonitor<BlobSettings> blobSettings)
     {
         _dataContext = dataContext;
         _blobService = blobService;
+        _blobSettings = blobSettings;
         _baciDataServiceFactory = baciDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
 
-        FirefoxProfile firefoxProfile = new(FirefoxProfile);
-        FirefoxOptions FirefoxOptions = new()
+        if (!string.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) && !string.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
         {
-            Profile = firefoxProfile,
-        };
-        //firefoxOptions.AddArguments("--headless");
-        FirefoxDriver = new FirefoxDriver(FirefoxDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
-        WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
-        WebDriverWait.IgnoreExceptionTypes(
-            typeof(NoSuchElementException),
-            typeof(StaleElementReferenceException),
-            typeof(ElementNotSelectableException),
-            typeof(ElementNotVisibleException));
+            FirefoxProfile firefoxProfile = new(pathSettings.CurrentValue.FirefoxProfilePath);
+            FirefoxOptions FirefoxOptions = new()
+            {
+                Profile = firefoxProfile,
+            };
+            //firefoxOptions.AddArguments("--headless");
+            FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
+            WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
+            WebDriverWait.IgnoreExceptionTypes(
+                typeof(NoSuchElementException),
+                typeof(StaleElementReferenceException),
+                typeof(ElementNotSelectableException),
+                typeof(ElementNotVisibleException));
+                
+        }
     }
     private async Task RestartExtract(int amountToExtract)
     {
@@ -312,12 +320,13 @@ public class BACIExtractor
                                         FirefoxDriver.SwitchTo().Window(window);
                                         if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
                                         {
-                                            // Download pdf, store locally (change later to blob db)
+                                            // Upload pdf to blob storage
                                             PrintOptions printOptions = new();
                                             //FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
+                                            var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
                                             var printDocument = FirefoxDriver.Print(printOptions);
-                                            var pdfFileName = $"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
-                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, "BACI");
+                                            var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
+                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.BACIContainer);
                                             if (dbTransactionResult is true) pdfDownloadCount++;
                                             if (dbTransactionResult is false)
                                             {

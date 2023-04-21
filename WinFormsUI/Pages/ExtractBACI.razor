@@ -1,19 +1,36 @@
 ﻿@page "/extractBACI"
 @using DataLibrary.Services
+@using DataLibrary.Settings;
+@using Microsoft.Extensions.Options;
 
 @inject BACIExtractor baciExtractor
-
-<div class="row mb-3 mt-3">
-    <div class="container">
-        <div>
-            <EditForm Model="@AmountToExtract">
-                <label>Amount</label>
-                <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
-            </EditForm>
-            <button class="btn btn-primary" type="submit" @onclick="() => Extract(AmountToExtract)">Extract</button>
+@inject IOptionsMonitor<DriverPathSettings> pathSettings
+@if(String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) ||
+    String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <div>
+                Please enter path settings for Firefox Profile and/or Gecko Driver at <a href="Settings">Settings.</a>
+            </div>
         </div>
     </div>
-</div>
+    
+}
+else
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <div>
+                <EditForm Model="@AmountToExtract">
+                    <label>Amount</label>
+                    <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
+                </EditForm>
+                <button class="btn btn-primary" type="submit" @onclick="() => Extract(AmountToExtract)">Extract</button>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
 

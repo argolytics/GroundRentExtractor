@@ -2,5 +2,6 @@
 
 public class BlobSettings
 {
-    public string BlobContainerClientConnectionString { get; set; }
+    public string? BACIContainer { get; set; }
+    public string? BACOContainer { get; set; }
 }

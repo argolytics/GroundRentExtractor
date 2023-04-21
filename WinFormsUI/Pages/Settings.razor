@@ -1,6 +1,11 @@
 ﻿@page "/settings"
+@using DataLibrary.Settings;
 @using Microsoft.AspNetCore.Components.Forms;
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.Extensions.Options;
+@using System.Text.Json;
+@using System.Text.Json.Nodes;
+@inject IOptionsMonitor<DriverPathSettings> pathSettings
 
 <PageTitle>Settings</PageTitle>
 <div class="row mb-3 mt-3">
@@ -8,46 +13,39 @@
         <div>
             <label>Upload Geckodriver executable here</label>
             <br />
-            <button class="btn btn-primary" @onclick="LoadGeckodriver">Select Geckodriver</button>
-            <label>@GeckodriverFilePath</label>
+            <button class="btn btn-primary" @onclick="LoadGeckoDriver">Select GeckoDriver</button>
+            <label>@pathSettings.CurrentValue.GeckoDriverPath</label>
         </div>
         <div>
             <label>Upload Firefox Profile folder here</label>
             <br />
             <button class="btn btn-primary" @onclick="LoadFirefoxProfile">Select Firefox Profile</button>
-            <label>@FirefoxProfilePath</label>
+            <label>@pathSettings.CurrentValue.FirefoxProfilePath</label>
         </div>
     </div>
-    @if(GeckodriverFilePath is not null)
-    {
-        <div>
-            <p>Geckodriver path uploaded!</p>
-        </div>
-    }
-    @if (FirefoxProfilePath is not null)
-    {
-        <div>
-            <p>Firefox profile path uploaded!</p>
-        </div>
-    }
     @if (ErrorsList.Count > 0)
     {
         <h2>ErrorsList</h2>
         <ul class="text-danger">
-        @foreach (var error in ErrorsList)
-        {
-            <li>@error</li>
-        }
+            @foreach (var error in ErrorsList)
+            {
+                <li>@error</li>
+            }
         </ul>
     }
 </div>
 
 @code {
-    public static string? GeckodriverFilePath;
-    public static string? FirefoxProfilePath;
     private List<string> ErrorsList = new();
 
-    private void LoadGeckodriver()
+    protected override void OnInitialized()
+    {
+        pathSettings.OnChange((s, v) =>
+        {
+            InvokeAsync(() => StateHasChanged());
+        });
+    }
+    private void LoadGeckoDriver()
     {
         ErrorsList.Clear();
         OpenFileDialog openFileDialog = new OpenFileDialog();
@@ -56,7 +54,7 @@
         DialogResult res = openFileDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            GeckodriverFilePath = openFileDialog.FileName; 
+            SettingsWriter.AddOrUpdateAppSetting("DriverPathSettings:GeckoDriverPath", openFileDialog.FileName);
         }
         else
         {
@@ -71,11 +69,46 @@
         DialogResult res = folderBrowserDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            FirefoxProfilePath = folderBrowserDialog.SelectedPath;
+            SettingsWriter.AddOrUpdateAppSetting("DriverPathSettings:FirefoxProfilePath", folderBrowserDialog.SelectedPath);
         }
         else
         {
             ErrorsList.Add(res.ToString());
+        }
+    }
+    private static class SettingsWriter
+    {
+        internal static void AddOrUpdateAppSetting(string sectionPathKey, string value)
+        {
+            try
+            {
+                var filePath = Path.Combine(System.AppContext.BaseDirectory, "appsettings.json"); 
+                string json = File.ReadAllText(filePath); 
+                JsonObject jsonObj = JsonSerializer.Deserialize<JsonObject>(json); 
+                SetValueRecursively(sectionPathKey, jsonObj, value);
+                string output = JsonSerializer.Serialize(jsonObj, new JsonSerializerOptions() { WriteIndented = true }); 
+                File.WriteAllText(filePath, output);
+            }
+            catch (Exception ex) { 
+                Console.WriteLine($"Error writing app settings | {0}", ex.Message); 
+            }
+        }
+
+        private static void SetValueRecursively(string sectionPathKey, JsonNode jsonObj, string value)
+        { // split the string at the first ':' character
+            var remainingSections = sectionPathKey.Split(":", 2); 
+            var currentSection = remainingSections[0]; 
+            if (remainingSections.Length > 1)
+            {
+                // continue with the procress, moving down the tree
+                var nextSection = remainingSections[1]; 
+                SetValueRecursively(nextSection, jsonObj[currentSection], value);
+            }
+            else
+            {
+                // we've got to the end of the tree, set the value
+                jsonObj[currentSection] = value;
+            }
         }
     }
 }

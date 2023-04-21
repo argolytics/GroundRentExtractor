@@ -1,14 +1,15 @@
-﻿using DataLibrary.Models;
-using Dapper;
-using System.Data;
+﻿using System.Data;
+using DataLibrary.Models;
 using DataLibrary.DbAccess;
+using Dapper;
 
 namespace DataLibrary.DbServices;
 
 public class ExceptionLogSqlDataService : IExceptionLogDataService
 {
     private readonly IUnitOfWork _unitOfWork;
-
+    private const string _CreateExceptionLogSql = @"INSERT INTO dbo.[ExceptionLog] ([AccountId], [Exception]) VALUES (@AccountId, @Exception); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+    private const string _DeleteExceptionLogSql = @"DELETE FROM dbo.[ExceptionLog] WHERE Id = @Id;";
     public ExceptionLogSqlDataService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -20,11 +21,7 @@ public class ExceptionLogSqlDataService : IExceptionLogDataService
             exceptionLogModel.AccountId,
             exceptionLogModel.Exception
         };
-        var dynParms = new DynamicParameters(parms);
-        dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
-        await _unitOfWork.Connection.ExecuteAsync("spExceptionLog_Create", dynParms,
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
-        exceptionLogModel.Id = dynParms.Get<int>("Id");
+        exceptionLogModel.Id = (int)(await _unitOfWork.Connection.ExecuteScalarAsync(_CreateExceptionLogSql, parms, transaction: _unitOfWork.Transaction));
     }
     public async Task<List<ExceptionLogModel>> ReadTopAmount(int amount)
     {
@@ -60,8 +57,7 @@ public class ExceptionLogSqlDataService : IExceptionLogDataService
     {
         try
         {
-            await _unitOfWork.Connection.ExecuteAsync("spExceptionLog_Delete", new { Id = id },
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            await _unitOfWork.Connection.ExecuteAsync(_DeleteExceptionLogSql, new { Id = id }, transaction: _unitOfWork.Transaction);
             return true;
         }
         catch (Exception ex)
