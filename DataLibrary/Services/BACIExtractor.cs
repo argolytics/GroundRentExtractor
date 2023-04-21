@@ -323,8 +323,9 @@ public class BACIExtractor
                                             // Upload pdf to blob storage
                                             PrintOptions printOptions = new();
                                             //FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
+                                            var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
                                             var printDocument = FirefoxDriver.Print(printOptions);
-                                            var pdfFileName = $"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
+                                            var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
                                             dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.BACIContainer);
                                             if (dbTransactionResult is true) pdfDownloadCount++;
                                             if (dbTransactionResult is false)

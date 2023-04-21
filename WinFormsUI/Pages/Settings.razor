@@ -23,18 +23,6 @@
             <label>@pathSettings.CurrentValue.FirefoxProfilePath</label>
         </div>
     </div>
-    @if (pathSettings.CurrentValue.GeckoDriverPath is not null)
-    {
-        <div>
-            <p>Geckodriver path uploaded!</p>
-        </div>
-    }
-    @if (pathSettings.CurrentValue.FirefoxProfilePath is not null)
-    {
-        <div>
-            <p>Firefox profile path uploaded!</p>
-        </div>
-    }
     @if (ErrorsList.Count > 0)
     {
         <h2>ErrorsList</h2>
