@@ -6,6 +6,7 @@ using DataLibrary.DbServices;
 using DataLibrary.Services;
 using DataLibrary.AutoMapperProfiles;
 using AutoMapper;
+using DataLibrary.Settings;
 
 namespace WinFormsUI;
 
@@ -17,8 +18,11 @@ public partial class Main : Form
         var azureSqlDbConnectionString = Program.Configuration.GetConnectionString("AzureSqlDb");
         var azureBlobStorageConnectionString = Program.Configuration.GetConnectionString("AzureBlobStorage");
         var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(_ => Program.Configuration);
         services.AddSingleton<IDataContext>(new DataContext(azureSqlDbConnectionString));
         services.AddSingleton(new BlobService(azureBlobStorageConnectionString));
+        services.Configure<DriverPathSettings>(Program.Configuration.GetSection("DriverPathSettings"));
+        services.Configure<BlobSettings>(Program.Configuration.GetSection("BlobSettings"));
         services.AddWindowsFormsBlazorWebView();
         services.AddBlazorWebViewDeveloperTools();
         services.AddTransient<ExceptionLogDataServiceFactory>();

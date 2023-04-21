@@ -1,14 +1,19 @@
 ﻿using DataLibrary.Models;
-using Dapper;
-using System.Data;
 using DataLibrary.DbAccess;
+using Dapper;
 
 namespace DataLibrary.DbServices;
 
 public class BACISqlDataService : IExtractorDataService
 {
     private readonly IUnitOfWork _unitOfWork;
-
+    private const string _CreateAddressSql = @"INSERT INTO dbo.[BACI] ([AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded]) VALUES (@AccountId, @County, @AccountNumber, @Ward, @Section, @Block, @Lot, @LandUseCode, @YearBuilt, @IsGroundRent, @IsRedeemed, @PdfCount, @AllDataDownloaded); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+    private const string _UpdateAddressSql = @"UPDATE dbo.[BACI] SET [AccountId] = @AccountId, [County] = @County, [AccountNumber] = @AccountNumber, [Ward] = @Ward, [Section] = @Section, [Block] = @Block, [Lot] = @Lot, [LandUseCode] = @LandUseCode, [YearBuilt] = @YearBuilt, [IsGroundRent] = @IsGroundRent, [IsRedeemed] = @IsRedeemed, [PdfCount] = @PdfCount, [AllDataDownloaded] = @AllDataDownloaded WHERE [AccountId] = @AccountId";
+    private const string _DeleteAddressSql = @"DELETE FROM dbo.[BACI] WHERE AccountId = @AccountId;";
+    private const string _SelectAddressGroundRentNull = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded] FROM dbo.[BACI] where [IsGroundRent] is null";
+    private const string _SelectAddressGroundRentTrue = @"SELECT TOP (@Amount) [Id], [AccountId], [County], [AccountNumber], [Ward], [Section], [Block], [Lot], [LandUseCode], [YearBuilt], [IsGroundRent], [IsRedeemed], [PdfCount], [AllDataDownloaded] FROM dbo.[BACI] where [IsGroundRent] = 1";
+    private const string _CreateGroundRentPdfSql = @"INSERT INTO dbo.[BACIGroundRentPdf] ([AddressId], [AccountId], [DocumentFiledType], [AcknowledgementNumber], [DateTimeFiled], [PdfPageCount], [Book], [Page], [ClerkInitials], [YearRecorded]) VALUES (@AddressId, @AccountId, @DocumentFiledType, @AcknowledgementNumber, @DateTimeFiled, @PdfPageCount, @Book, @Page, @ClerkInitials, @YearRecorded); SELECT CAST(SCOPE_IDENTITY() AS INT);";
+    private const string _UpdateGroundRentPdfSql = @"UPDATE dbo.[BACIGroundRentPdf] SET [AccountId] = @AccountId, [AddressId] = @AddressId, [DocumentFiledType] = @DocumentFiledType, [AcknowledgementNumber] = @AcknowledgementNumber, [DateTimeFiled] = @DateTimeFiled, [PdfPageCount] = @PdfPageCount, [Book] = @Book, [Page] = @Page, [ClerkInitials] = @ClerkInitials, [YearRecorded] = @YearRecorded WHERE [AccountId] = @AccountId AND [DateTimeFiled] = @DateTimeFiled";
     public BACISqlDataService(IUnitOfWork unitOfWork)
     {
         _unitOfWork = unitOfWork;
@@ -33,11 +38,9 @@ public class BACISqlDataService : IExtractorDataService
                 addressModel.PdfCount,
                 addressModel.AllDataDownloaded
             };
-            var dynParms = new DynamicParameters(parms);
-            dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            await _unitOfWork.Connection.ExecuteAsync("spBACI_CreateAddress", dynParms,
-                commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
-            addressModel.Id = dynParms.Get<int>("Id");
+
+            addressModel.Id = (int)(await _unitOfWork.Connection.ExecuteScalarAsync(_CreateAddressSql, parms, transaction: _unitOfWork.Transaction));
+
             return true;
         }
         catch (Exception ex)
@@ -66,8 +69,7 @@ public class BACISqlDataService : IExtractorDataService
                 addressModel.PdfCount,
                 addressModel.AllDataDownloaded
             };
-            await _unitOfWork.Connection.ExecuteAsync("spBACI_UpdateAddress", parms,
-                commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            await _unitOfWork.Connection.ExecuteAsync(_UpdateAddressSql, parms, transaction: _unitOfWork.Transaction);
             return true;
         }
         catch (Exception ex)
@@ -93,11 +95,7 @@ public class BACISqlDataService : IExtractorDataService
                 groundRentPdfModel.ClerkInitials,
                 groundRentPdfModel.YearRecorded
             };
-            var dynParms = new DynamicParameters(parms);
-            dynParms.Add("@Id", dbType: DbType.Int32, direction: ParameterDirection.Output);
-            await _unitOfWork.Connection.ExecuteAsync("spBACI_CreateGroundRentPdf", dynParms,
-                commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
-            groundRentPdfModel.Id = dynParms.Get<int>("Id");
+            groundRentPdfModel.Id = (int)(await _unitOfWork.Connection.ExecuteScalarAsync(_CreateGroundRentPdfSql, parms, transaction: _unitOfWork.Transaction));
             return true;
         }
         catch (Exception ex)
@@ -123,8 +121,7 @@ public class BACISqlDataService : IExtractorDataService
                 groundRentPdfModel.ClerkInitials,
                 groundRentPdfModel.YearRecorded
             };
-            await _unitOfWork.Connection.ExecuteAsync("spBACI_UpdateGroundRentPdf", parms,
-                commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            await _unitOfWork.Connection.ExecuteAsync(_UpdateGroundRentPdfSql, parms, transaction: _unitOfWork.Transaction);
             return true;
         }
         catch (Exception ex)
@@ -135,22 +132,19 @@ public class BACISqlDataService : IExtractorDataService
     }
     public async Task<List<AddressModel>> ReadAddressTopAmountWhereIsGroundRentNull(int amount)
     {
-        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBACI_ReadAddressTopAmountWhereIsGroundRentNull",
-            new { Amount = amount },
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
+        return (await _unitOfWork.Connection.QueryAsync<AddressModel>(_SelectAddressGroundRentNull,
+            new { Amount = amount }, transaction: _unitOfWork.Transaction)).ToList();
     }
     public async Task<List<AddressModel>> ReadAddressTopAmountWhereIsGroundRentTrue(int amount)
     {
-        return (await _unitOfWork.Connection.QueryAsync<AddressModel>("spBACI_ReadAddressTopAmountWhereIsGroundRentTrue",
-            new { Amount = amount },
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction)).ToList();
+        return (await _unitOfWork.Connection.QueryAsync<AddressModel>(_SelectAddressGroundRentTrue,
+            new { Amount = amount }, transaction: _unitOfWork.Transaction)).ToList();
     }
     public async Task<bool> DeleteAddress(string accountId)
     {
         try
         {
-            await _unitOfWork.Connection.ExecuteAsync("spBACI_DeleteAddress", new { AccountId = accountId },
-            commandType: CommandType.StoredProcedure, transaction: _unitOfWork.Transaction);
+            await _unitOfWork.Connection.ExecuteAsync(_DeleteAddressSql, new { AccountId = accountId }, transaction: _unitOfWork.Transaction);
             return true;
         }
         catch (Exception ex)
