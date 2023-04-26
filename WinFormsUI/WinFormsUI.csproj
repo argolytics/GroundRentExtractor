@@ -6,8 +6,10 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>  
+<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.Web" Version="7.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebView.WindowsForms" Version="7.0.59" />
@@ -19,5 +21,17 @@
   <ItemGroup>
     <ProjectReference Include="..\DataLibrary\DataLibrary.csproj" />
   </ItemGroup>
-
+  <Target Name="PrepForPublish" Condition="'$(PublishProtocol)'!=''" BeforeTargets="PrepareForBuild">
+    <Message Importance="high" Text="Embedding Resources" />
+    <ItemGroup>
+      <EmbeddedResource Include="wwwroot\**" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="appsettings.json" CopyToOutputDirectory="Always" />
+    </ItemGroup>
+    <ItemGroup>
+      <EmbeddedResource Include="obj\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\scopedcss\bundle\$(ProjectName).styles.css" link="wwwroot\WinFormsUI.styles.css"   CopyToOutputDirectory="Always" >
+      </EmbeddedResource>
+    </ItemGroup>
+  </Target>
 </Project>
