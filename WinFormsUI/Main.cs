@@ -33,7 +33,8 @@ public partial class Main : Form
         {
             options.AddProfile<AddressProfile>();
         });
-        blazorWebView.HostPage = "wwwroot\\index.html";
+        var executingDir = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+        blazorWebView.HostPage = Path.Combine(executingDir, "wwwroot\\index.html");
         blazorWebView.Services = services.BuildServiceProvider();
         blazorWebView.RootComponents.Add<App>("#app");
     }
