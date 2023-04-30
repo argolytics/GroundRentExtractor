@@ -48,7 +48,6 @@ public class BACIExtractor
         DateTimeFiledIsNull
     }
     private List<AddressModel> AddressList = new();
-    private List<string?> CatchList = new();
     private bool? dbTransactionResult = null;
     private bool? allDataDownloaded = true;
     private int exceptionCount = 0;
@@ -83,29 +82,6 @@ public class BACIExtractor
                 typeof(ElementNotSelectableException),
                 typeof(ElementNotVisibleException));
                 
-        }
-    }
-    private async Task RestartExtract(int amountToExtract)
-    {
-        AddressList.Clear();
-        await Extract(amountToExtract);
-    }
-    private static void ReportTotals(FirefoxDriver FirefoxDriver, int addressListIterationCount, int addressListIterationTotal)
-    {
-        var percentComplete = addressListIterationTotal == 0 ? 0 : decimal.Divide(addressListIterationCount, addressListIterationTotal);
-        Console.WriteLine($"{FirefoxDriver} has processed {percentComplete:P0} of {addressListIterationTotal} addresses.");
-    }
-    public async Task LogException(string accountId, string exception)
-    {
-        ExceptionLogModel exceptionLogModel = new()
-        {
-            AccountId = accountId,
-            Exception = exception
-        };
-        using (var uow = _dataContext.CreateUnitOfWork())
-        {
-            var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
-            await exceptionLogDataService.Create(exceptionLogModel);
         }
     }
     public async Task Extract(int amountToExtract)
@@ -415,46 +391,78 @@ public class BACIExtractor
                 }
             }
         }
-        catch (ElementClickInterceptedException elementClickInterceptedException)
-        {
-            exceptionCount++;
-            CatchList.Add(elementClickInterceptedException.Message);
-            Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {elementClickInterceptedException.Message}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract);
-        }
         catch (WebDriverTimeoutException webDriverTimeoutException)
         {
             exceptionCount++;
-            CatchList.Add(webDriverTimeoutException.Message);
-            Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {webDriverTimeoutException.Message}");
+            var exceptionMessage = webDriverTimeoutException.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
+            await RestartExtract(amountToExtract);
+        }
+        catch (ElementClickInterceptedException elementClickInterceptedException)
+        {
+            exceptionCount++;
+            var exceptionMessage = elementClickInterceptedException.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
+            if (exceptionCount > 5) FirefoxDriver.Quit();
+            await RestartExtract(amountToExtract);
+        }
+        catch (StaleElementReferenceException staleElementReferenceException)
+        {
+            exceptionCount++;
+            var exceptionMessage = staleElementReferenceException.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
             await RestartExtract(amountToExtract);
         }
         catch (NoSuchWindowException noSuchWindowException)
         {
             exceptionCount++;
-            CatchList.Add(noSuchWindowException.Message);
-            Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {noSuchWindowException.Message}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
+            var exceptionMessage = noSuchWindowException.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
+            FirefoxDriver.Quit();
+        }
+        catch (ObjectDisposedException objectDisposedException)
+        {
+            exceptionCount++;
+            var exceptionMessage = objectDisposedException.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
             FirefoxDriver.Quit();
         }
         catch (Exception e)
         {
             exceptionCount++;
-            CatchList.Add(e.Message);
-            Console.WriteLine($"Total exception count: {exceptionCount}");
-            Console.WriteLine($"Error Message: {e.Message}");
+            var exceptionMessage = e.Message;
+            Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
             await RestartExtract(amountToExtract);
         }
         finally
         {
-            CatchList.Clear();
             ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+        }
+    }
+    private async Task RestartExtract(int amountToExtract)
+    {
+        AddressList.Clear();
+        await Extract(amountToExtract);
+    }
+    private static void ReportTotals(FirefoxDriver FirefoxDriver, int addressListIterationCount, int addressListIterationTotal)
+    {
+        var percentComplete = addressListIterationTotal == 0 ? 0 : decimal.Divide(addressListIterationCount, addressListIterationTotal);
+        Console.WriteLine($"{FirefoxDriver} has processed {percentComplete:P0} of {addressListIterationTotal} addresses.");
+    }
+    public async Task LogException(string accountId, string exception)
+    {
+        ExceptionLogModel exceptionLogModel = new()
+        {
+            AccountId = accountId,
+            Exception = exception
+        };
+        using (var uow = _dataContext.CreateUnitOfWork())
+        {
+            var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
+            await exceptionLogDataService.Create(exceptionLogModel);
         }
     }
 }

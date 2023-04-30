@@ -11,13 +11,13 @@
 <div class="row mb-3 mt-3">
     <div class="container mt-3">
         <div>
-            <label>Upload Geckodriver executable here</label>
+            <label>Select Geckodriver folder here</label>
             <br />
-            <button class="btn btn-primary" @onclick="LoadGeckoDriver">Select GeckoDriver</button>
+            <button class="btn btn-primary" @onclick="LoadGeckoDriver">Select GeckoDriver folder</button>
             <label>@pathSettings.CurrentValue.GeckoDriverPath</label>
         </div>
         <div>
-            <label>Upload Firefox Profile folder here</label>
+            <label>Select Firefox Profile folder here</label>
             <br />
             <button class="btn btn-primary" @onclick="LoadFirefoxProfile">Select Firefox Profile</button>
             <label>@pathSettings.CurrentValue.FirefoxProfilePath</label>
@@ -48,13 +48,12 @@
     private void LoadGeckoDriver()
     {
         ErrorsList.Clear();
-        OpenFileDialog openFileDialog = new OpenFileDialog();
-        openFileDialog.Filter = "(*.exe) | *.exe";
-        openFileDialog.Multiselect = false;
-        DialogResult res = openFileDialog.ShowDialog();
+        FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
+        folderBrowserDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        DialogResult res = folderBrowserDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            SettingsWriter.AddOrUpdateAppSetting("DriverPathSettings:GeckoDriverPath", openFileDialog.FileName);
+            SettingsWriter.AddOrUpdateAppSetting("DriverPathSettings:GeckoDriverPath", folderBrowserDialog.SelectedPath);
         }
         else
         {
