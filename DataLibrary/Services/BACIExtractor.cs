@@ -18,6 +18,7 @@ public class BACIExtractor
     private readonly IOptionsMonitor<BlobSettings> _blobSettings;
     private readonly BACIDataServiceFactory _baciDataServiceFactory;
     private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
+    private readonly IOptionsMonitor<DriverPathSettings> _pathSettings;
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
@@ -65,27 +66,48 @@ public class BACIExtractor
         _blobSettings = blobSettings;
         _baciDataServiceFactory = baciDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
+        _pathSettings = pathSettings;
 
-        if (!string.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) && !string.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
+    }
+
+    private void SetupDriver(IOptionsMonitor<DriverPathSettings> pathSettings)
+    {
+        try
         {
-            FirefoxProfile firefoxProfile = new(pathSettings.CurrentValue.FirefoxProfilePath);
-            FirefoxOptions FirefoxOptions = new()
+            if (!string.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) && !string.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
             {
-                Profile = firefoxProfile,
-            };
-            //firefoxOptions.AddArguments("--headless");
-            FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
-            WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
-            WebDriverWait.IgnoreExceptionTypes(
-                typeof(NoSuchElementException),
-                typeof(StaleElementReferenceException),
-                typeof(ElementNotSelectableException),
-                typeof(ElementNotVisibleException));
-                
+                FirefoxProfile firefoxProfile = new(pathSettings.CurrentValue.FirefoxProfilePath);
+                FirefoxOptions FirefoxOptions = new()
+                {
+                    Profile = firefoxProfile,
+                };
+                //firefoxOptions.AddArguments("--headless");
+                FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
+                WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
+                WebDriverWait.IgnoreExceptionTypes(
+                    typeof(NoSuchElementException),
+                    typeof(StaleElementReferenceException),
+                    typeof(ElementNotSelectableException),
+                    typeof(ElementNotVisibleException));
+
+            }
+        }
+        catch(Exception ex)
+        {
+            Serilog.Log.Error(ex.ToString());
         }
     }
-    public async Task Extract(int amountToExtract)
+
+    public Task Extract(int amountToExtract)
     {
+        return Extract(amountToExtract, new CancellationTokenSource().Token);
+    }
+    public async Task Extract(int amountToExtract, CancellationToken cancellationToken)
+    {
+        if (FirefoxDriver == null && WebDriverWait == null)
+        {
+            SetupDriver(_pathSettings);
+        }
         // Define baseUrlWindow
         var baseUrlWindow = FirefoxDriver.CurrentWindowHandle;
         // Read and populate address list
@@ -107,6 +129,10 @@ public class BACIExtractor
             var iterList = AddressList.ToList();
             foreach (var iterAddress in iterList)
             {
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
                 iterAddress.County = "BACI";
                 // Selecting appropriate county
                 FirefoxDriver.Navigate().GoToUrl(BaseUrl);
@@ -397,7 +423,7 @@ public class BACIExtractor
             var exceptionMessage = webDriverTimeoutException.Message;
             Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract);
+            await RestartExtract(amountToExtract, cancellationToken);
         }
         catch (ElementClickInterceptedException elementClickInterceptedException)
         {
@@ -405,7 +431,7 @@ public class BACIExtractor
             var exceptionMessage = elementClickInterceptedException.Message;
             Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract);
+            await RestartExtract(amountToExtract, cancellationToken);
         }
         catch (StaleElementReferenceException staleElementReferenceException)
         {
@@ -413,7 +439,7 @@ public class BACIExtractor
             var exceptionMessage = staleElementReferenceException.Message;
             Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract);
+            await RestartExtract(amountToExtract, cancellationToken);
         }
         catch (NoSuchWindowException noSuchWindowException)
         {
@@ -435,17 +461,17 @@ public class BACIExtractor
             var exceptionMessage = e.Message;
             Console.WriteLine($"Error Message: {exceptionMessage}");
             if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract);
+            await RestartExtract(amountToExtract, cancellationToken);
         }
         finally
         {
             ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
         }
     }
-    private async Task RestartExtract(int amountToExtract)
+    private async Task RestartExtract(int amountToExtract, CancellationToken cancellationToken)
     {
         AddressList.Clear();
-        await Extract(amountToExtract);
+        await Extract(amountToExtract, cancellationToken);
     }
     private static void ReportTotals(FirefoxDriver FirefoxDriver, int addressListIterationCount, int addressListIterationTotal)
     {
