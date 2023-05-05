@@ -5,7 +5,6 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using Azure.Storage.Blobs;
 using DataLibrary.Settings;
 using Microsoft.Extensions.Options;
 
@@ -83,7 +82,7 @@ public class BACIExtractor
                 };
                 //firefoxOptions.AddArguments("--headless");
                 FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(20));
-                WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(20));
+                WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(10));
                 WebDriverWait.IgnoreExceptionTypes(
                     typeof(NoSuchElementException),
                     typeof(StaleElementReferenceException),
@@ -120,7 +119,7 @@ public class BACIExtractor
         {
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
-            Console.WriteLine("Baltimore City complete.");
+            Serilog.Log.Debug("BACI complete.");
         }
         var addressListIterationCount = 0;
         var addressListIterationTotal = AddressList.Count;
@@ -182,6 +181,7 @@ public class BACIExtractor
                     else
                     {
                         await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
+                        Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
                     }
                     addressListIterationCount++;
                     AddressList.Remove(iterAddress);
@@ -216,13 +216,14 @@ public class BACIExtractor
                                     YearBuilt = iterAddress.YearBuilt,
                                     IsGroundRent = false,
                                     IsRedeemed = null,
-                                    PdfCount = 0,
+                                    PdfCount = null,
                                     AllDataDownloaded = null
                                 });
                             }
                             if (dbTransactionResult is false)
                             {
                                 await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailAddressNotGroundRent.ToString());
+                                Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailAddressNotGroundRent.ToString());
                             }
                         }
                         addressListIterationCount++;
@@ -260,6 +261,7 @@ public class BACIExtractor
                                 if (dateTimeFiledString is null)
                                 {
                                     await LogException(iterAddress.AccountId, ExceptionLog.DateTimeFiledIsNull.ToString());
+                                    Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.DateTimeFiledIsNull.ToString());
                                     allDataDownloaded = false;
                                     metadataCollectionCurrentCount++;
                                     continue;
@@ -305,6 +307,7 @@ public class BACIExtractor
                                 if (dbTransactionResult is false)
                                 {
                                     await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
+                                    Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
                                     allDataDownloaded = false;
                                     metadataCollectionCurrentCount++;
                                     // If we cannot store metadata, we do not want the accompanying pdf, so we continue here
@@ -328,11 +331,15 @@ public class BACIExtractor
                                             var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
                                             var printDocument = FirefoxDriver.Print(printOptions);
                                             var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
-                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.BACIContainer);
-                                            if (dbTransactionResult is true) pdfDownloadCount++;
+                                            dbTransactionResult = await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.Test);
+                                            if (dbTransactionResult is true)
+                                            {
+                                                pdfDownloadCount++;
+                                            }
                                             if (dbTransactionResult is false)
                                             {
                                                 await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                                Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                                 allDataDownloaded = false;
                                             }
                                             groundRentPdfModelList.RemoveAt(0);
@@ -343,6 +350,7 @@ public class BACIExtractor
                                         else
                                         {
                                             await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                            Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                             allDataDownloaded = false;
                                             // Close pdf window and switch back to baseUrlWindow
                                             FirefoxDriver.Close();
@@ -384,6 +392,7 @@ public class BACIExtractor
                             if (dbTransactionResult is false)
                             {
                                 await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
+                                Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
                             }
                         }
                         // pdf download count or metadata collection current are not count equal to pdf total count
@@ -412,6 +421,7 @@ public class BACIExtractor
                             if (dbTransactionResult is false)
                             {
                                 await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
+                                Serilog.Log.Error($"{iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
                             }
                         }
                         addressListIterationCount++;
@@ -424,62 +434,78 @@ public class BACIExtractor
         {
             exceptionCount++;
             var exceptionMessage = webDriverTimeoutException.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract, cancellationToken);
+            Serilog.Log.Error($"Exception count: {exceptionCount} / 5. {exceptionMessage}");
+            if (exceptionCount == 5)
+            {
+                ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+                FirefoxDriver.Quit();
+            }
+            int extractAmountRemaining = amountToExtract - addressListIterationCount;
+            FirefoxDriver.Navigate().GoToUrl(BaseUrl);
+            await RestartExtract(extractAmountRemaining, cancellationToken);
         }
         catch (ElementClickInterceptedException elementClickInterceptedException)
         {
             exceptionCount++;
             var exceptionMessage = elementClickInterceptedException.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract, cancellationToken);
+            Serilog.Log.Error($"Exception count: {exceptionCount} / 5. {exceptionMessage}");
+            if (exceptionCount == 5)
+            {
+                ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+                FirefoxDriver.Quit();
+            }
+            int extractAmountRemaining = amountToExtract - addressListIterationCount;
+            FirefoxDriver.Navigate().GoToUrl(BaseUrl);
+            await RestartExtract(extractAmountRemaining, cancellationToken);
         }
         catch (StaleElementReferenceException staleElementReferenceException)
         {
             exceptionCount++;
             var exceptionMessage = staleElementReferenceException.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract, cancellationToken);
+            Serilog.Log.Error($"Exception count: {exceptionCount} / 5. {exceptionMessage}");
+            if (exceptionCount == 5)
+            {
+                ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+                FirefoxDriver.Quit();
+            }
+            int extractAmountRemaining = amountToExtract - addressListIterationCount;
+            FirefoxDriver.Navigate().GoToUrl(BaseUrl);
+            await RestartExtract(extractAmountRemaining, cancellationToken);
         }
         catch (NoSuchWindowException noSuchWindowException)
         {
             exceptionCount++;
             var exceptionMessage = noSuchWindowException.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
+            Serilog.Log.Error($"Critical exception: quitting application. {exceptionMessage}");
+            ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
             FirefoxDriver.Quit();
         }
         catch (ObjectDisposedException objectDisposedException)
         {
             exceptionCount++;
             var exceptionMessage = objectDisposedException.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
+            Serilog.Log.Error($"Critical exception: quitting application. {exceptionMessage}");
+            ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
             FirefoxDriver.Quit();
         }
         catch (Exception e)
         {
             exceptionCount++;
             var exceptionMessage = e.Message;
-            Console.WriteLine($"Error Message: {exceptionMessage}");
-            if (exceptionCount > 5) FirefoxDriver.Quit();
-            await RestartExtract(amountToExtract, cancellationToken);
-        }
-        finally
-        {
+            Serilog.Log.Error($"Critical exception: quitting application. {exceptionMessage}");
             ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
+            FirefoxDriver.Quit();
         }
     }
-    private async Task RestartExtract(int amountToExtract, CancellationToken cancellationToken)
+    private async Task RestartExtract(int extractAmountRemaining, CancellationToken cancellationToken)
     {
         AddressList.Clear();
-        await Extract(amountToExtract, cancellationToken);
+        await Extract(extractAmountRemaining, cancellationToken);
     }
     private static void ReportTotals(FirefoxDriver FirefoxDriver, int addressListIterationCount, int addressListIterationTotal)
     {
         var percentComplete = addressListIterationTotal == 0 ? 0 : decimal.Divide(addressListIterationCount, addressListIterationTotal);
-        Console.WriteLine($"{FirefoxDriver} has processed {percentComplete:P0} of {addressListIterationTotal} addresses.");
+        Serilog.Log.Information($"{FirefoxDriver} has processed {percentComplete:P0} of {addressListIterationTotal} addresses.");
     }
     public async Task LogException(string accountId, string exception)
     {

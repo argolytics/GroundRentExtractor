@@ -21,8 +21,9 @@ public class BlobService
             await blob.UploadAsync(stream);
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            Serilog.Log.Error(ex.ToString());
             return false;
         }
     }
