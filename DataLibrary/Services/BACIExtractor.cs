@@ -429,6 +429,8 @@ public class BACIExtractor
                     }
                 }
             }
+            FirefoxDriver.Navigate().GoToUrl(BaseUrl);
+            ReportTotals(FirefoxDriver, addressListIterationCount, addressListIterationTotal);
         }
         catch (WebDriverTimeoutException webDriverTimeoutException)
         {
