@@ -344,6 +344,9 @@ public class BACIExtractor
                                         {
                                             await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                             allDataDownloaded = false;
+                                            // Close pdf window and switch back to baseUrlWindow
+                                            FirefoxDriver.Close();
+                                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
                                         }
                                     }
                                 }
