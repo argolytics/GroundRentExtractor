@@ -29,6 +29,7 @@ public partial class Main : Form
         services.AddTransient<BACIDataServiceFactory>();
         services.AddTransient<BACIExtractor>();
         services.AddAutoMapper(typeof(DataLibrary.AutoMapperEntryPoint).Assembly);
+        services.AddSingleton<ExtractController>(); 
         var mapper = new MapperConfiguration(options =>
         {
             options.AddProfile<AddressProfile>();

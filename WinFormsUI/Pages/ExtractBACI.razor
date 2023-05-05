@@ -3,7 +3,8 @@
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
 
-@inject BACIExtractor baciExtractor
+@inject ExtractController controller 
+@inject BACIExtractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @if(String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) ||
     String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
@@ -26,7 +27,7 @@ else
                     <label>Amount</label>
                     <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
                 </EditForm>
-                <button class="btn btn-primary" type="submit" @onclick="() => Extract(AmountToExtract)">Extract</button>
+                <button class="btn btn-primary" type="submit" disabled="@(controller.Running)" @onclick="() => Extract(AmountToExtract)">Extract</button>
             </div>
         </div>
     </div>
@@ -37,11 +38,20 @@ else
     private int AmountToExtract { get; set; }
     private async Task Extract(int amountToExtract)
     {
-        await baciExtractor.Extract(AmountToExtract);
+        await controller.StartExtract(extractor, AmountToExtract);
+        StateHasChanged(); 
     }
+
+    private void JobFinishedEventHandler(object sender, EventArgs args)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
     protected override Task OnInitializedAsync()
     {
         AmountToExtract = 500;
+        this.controller.JobFinishedEvent += JobFinishedEventHandler;
+
         return base.OnInitializedAsync();
     }
 }

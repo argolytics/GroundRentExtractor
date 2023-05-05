@@ -13,6 +13,7 @@ internal static class Program
         Configuration = builder.Build();
         Log.Logger = new LoggerConfiguration()
             .ReadFrom.Configuration(Configuration)
+            .WriteTo.Console()
             .CreateLogger();
         ApplicationConfiguration.Initialize();
         Application.Run(new Main());
