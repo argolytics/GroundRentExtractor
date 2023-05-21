@@ -2,8 +2,7 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-
-@inject ExtractController controller 
+@inject BACIExtractController controller 
 @inject BACIExtractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @if(String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) ||
@@ -38,7 +37,7 @@ else
     private int AmountToExtract { get; set; }
     private async Task Extract(int amountToExtract)
     {
-        await controller.StartExtract(extractor, AmountToExtract);
+        await controller.StartBACIExtract(extractor, AmountToExtract);
         StateHasChanged(); 
     }
 
@@ -49,7 +48,7 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        AmountToExtract = 500;
+        AmountToExtract = 0;
         this.controller.JobFinishedEvent += JobFinishedEventHandler;
 
         return base.OnInitializedAsync();

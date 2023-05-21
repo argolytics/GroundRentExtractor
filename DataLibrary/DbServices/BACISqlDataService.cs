@@ -45,7 +45,7 @@ public class BACISqlDataService : IExtractorDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{ex.Message}");
+            Serilog.Log.Error($"{ex.Message}");
             return false;
         }
     }
@@ -74,7 +74,7 @@ public class BACISqlDataService : IExtractorDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"{ex.Message}");
+            Serilog.Log.Error($"{ex.Message}");
             return false;
         }
     }
@@ -100,7 +100,7 @@ public class BACISqlDataService : IExtractorDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Serilog.Log.Error($"{ex.Message}");
             return false;
         }
     }
@@ -126,7 +126,7 @@ public class BACISqlDataService : IExtractorDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Serilog.Log.Error($"{ex.Message}");
             return false;
         }
     }
@@ -149,7 +149,7 @@ public class BACISqlDataService : IExtractorDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex.Message);
+            Serilog.Log.Error($"{ex.Message}");
             return false;
         }
     }

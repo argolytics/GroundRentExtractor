@@ -30,8 +30,14 @@
       <EmbeddedResource Include="appsettings.json" CopyToOutputDirectory="Always" />
     </ItemGroup>
     <ItemGroup>
-      <EmbeddedResource Include="obj\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\scopedcss\bundle\$(ProjectName).styles.css" link="wwwroot\WinFormsUI.styles.css"   CopyToOutputDirectory="Always" >
+      <EmbeddedResource Include="obj\$(Configuration)\$(TargetFramework)\$(RuntimeIdentifier)\scopedcss\bundle\$(ProjectName).styles.css" link="wwwroot\WinFormsUI.styles.css" CopyToOutputDirectory="Always">
       </EmbeddedResource>
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <UpToDateCheckInput Remove="Pages\ExtractBACO.razor" />
+  </ItemGroup>
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="Pages\ExtractBACO.razor" />
+  </ItemGroup>
 </Project>

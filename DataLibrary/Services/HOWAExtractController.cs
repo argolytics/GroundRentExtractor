@@ -1,6 +1,6 @@
 ﻿namespace DataLibrary.Services
 {
-    public class ExtractController : IDisposable
+    public class HOWAExtractController : IDisposable
     {
         public event EventHandler JobFinishedEvent;
         private CancellationTokenSource _tokenSource;
@@ -15,7 +15,7 @@
             }
         }
 
-        public Task StartExtract(BACIExtractor extractor, int amount)
+        public Task StartHOWAExtract(HOWAExtractor extractor, int amount)
         {
             if (_worker == null || _worker.IsCompleted)
             {
@@ -24,7 +24,7 @@
                 {
                     await extractor.Extract(amount, _tokenSource.Token);
                 });
-         
+
                 _worker.ContinueWith((o) =>
                 {
                     this.OnJobFinished();
@@ -43,7 +43,7 @@
 
         public void Dispose()
         {
-            if(Running && _tokenSource != null)
+            if (Running && _tokenSource != null)
             {
                 _tokenSource.Cancel();
             }

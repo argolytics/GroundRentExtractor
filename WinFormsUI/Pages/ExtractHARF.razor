@@ -1,0 +1,56 @@
+﻿@page "/extractHARF"
+@using DataLibrary.Services
+@using DataLibrary.Settings;
+@using Microsoft.Extensions.Options;
+@inject HARFExtractController controller
+@inject HARFExtractor extractor
+@inject IOptionsMonitor<DriverPathSettings> pathSettings
+@if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) ||
+   String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <div>
+                Please enter path settings for Firefox Profile and/or Gecko Driver at <a href="Settings">Settings.</a>
+            </div>
+        </div>
+    </div>
+
+}
+else
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <div>
+                <EditForm Model="@AmountToExtract">
+                    <label>Amount</label>
+                    <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
+                </EditForm>
+                <button class="btn btn-primary" type="submit" disabled="@(controller.Running)" @onclick="() => Extract(AmountToExtract)">Extract</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+
+    private int AmountToExtract { get; set; }
+    private async Task Extract(int amountToExtract)
+    {
+        await controller.StartHARFExtract(extractor, AmountToExtract);
+        StateHasChanged();
+    }
+
+    private void JobFinishedEventHandler(object sender, EventArgs args)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        AmountToExtract = 0;
+        this.controller.JobFinishedEvent += JobFinishedEventHandler;
+
+        return base.OnInitializedAsync();
+    }
+}
