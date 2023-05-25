@@ -11,16 +11,105 @@
 <div class="row mb-3 mt-3">
     <div class="container mt-3">
         <div>
-            <label>Select Geckodriver folder here</label>
-            <br />
-            <button class="btn btn-primary" @onclick="LoadGeckoDriver">Select GeckoDriver folder</button>
-            <label>@pathSettings.CurrentValue.GeckoDriverPath</label>
+            <button class="btn btn-primary" @onclick="LoadGeckoDriver">GeckoDriver</button>
+            <label style="color:green">@pathSettings.CurrentValue.GeckoDriverPath</label>
+        </div>
+        <br />
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxALLEProfile">ALLE Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxALLEProfilePath</label>
         </div>
         <div>
-            <label>Select Firefox Profile folder here</label>
-            <br />
-            <button class="btn btn-primary" @onclick="LoadFirefoxProfile">Select Firefox Profile</button>
-            <label>@pathSettings.CurrentValue.FirefoxProfilePath</label>
+            <button class="btn btn-primary" @onclick="LoadFirefoxANNEProfile">ANNE Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxANNEProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxBACIProfile">BACI Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxBACIProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxBACOProfile">BACO Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxBACOProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxCALVProfile">CALV Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxCALVProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxCAROProfile">CARO Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxCAROProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxCARRProfile">CARR Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxCARRProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxCECIProfile">CECI Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxCECIProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxCHARProfile">CHAR Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxCHARProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxDORCProfile">DORC Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxDORCProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxFREDProfile">FRED Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxFREDProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxGARRProfile">GARR Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxGARRProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxHARFProfile">HARF Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxHARFProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxHOWAProfile">HOWA Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxHOWAProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxKENTProfile">KENT Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxKENTProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxMONTProfile">MONT Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxMONTProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxPRINProfile">PRIN Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxPRINProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxQUEEProfile">QUEE Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxQUEEProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxSOMEProfile">SOME Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxSOMEProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxSTMAProfile">STMA Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxSTMAProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxTALBProfile">TALB Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxTALBProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxWASHProfile">WASH Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxWASHProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxWICOProfile">WICO Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxWICOProfilePath</label>
+        </div>
+        <div>
+            <button class="btn btn-primary" @onclick="LoadFirefoxWORCProfile">WORC Profile</button>
+            <label style="color:green">@pathSettings.CurrentValue.FirefoxWORCProfilePath</label>
         </div>
     </div>
     @if (ErrorsList.Count > 0)
@@ -60,7 +149,31 @@
             ErrorsList.Add(res.ToString());
         }
     }
-    private void LoadFirefoxProfile()
+    private void LoadFirefoxALLEProfile() => LoadFirefoxProfile("ALLE");
+    private void LoadFirefoxANNEProfile() => LoadFirefoxProfile("ANNE");
+    private void LoadFirefoxBACIProfile() => LoadFirefoxProfile("BACI");
+    private void LoadFirefoxBACOProfile() => LoadFirefoxProfile("BACO");
+    private void LoadFirefoxCALVProfile() => LoadFirefoxProfile("CALV");
+    private void LoadFirefoxCAROProfile() => LoadFirefoxProfile("CARO");
+    private void LoadFirefoxCARRProfile() => LoadFirefoxProfile("CARR");
+    private void LoadFirefoxCECIProfile() => LoadFirefoxProfile("CECI");
+    private void LoadFirefoxCHARProfile() => LoadFirefoxProfile("CHAR");
+    private void LoadFirefoxDORCProfile() => LoadFirefoxProfile("DORC");
+    private void LoadFirefoxFREDProfile() => LoadFirefoxProfile("FRED");
+    private void LoadFirefoxGARRProfile() => LoadFirefoxProfile("GARR");
+    private void LoadFirefoxHARFProfile() => LoadFirefoxProfile("HARF");
+    private void LoadFirefoxHOWAProfile() => LoadFirefoxProfile("HOWA");
+    private void LoadFirefoxKENTProfile() => LoadFirefoxProfile("KENT");
+    private void LoadFirefoxMONTProfile() => LoadFirefoxProfile("MONT");
+    private void LoadFirefoxPRINProfile() => LoadFirefoxProfile("PRIN");
+    private void LoadFirefoxQUEEProfile() => LoadFirefoxProfile("QUEE");
+    private void LoadFirefoxSOMEProfile() => LoadFirefoxProfile("SOME");
+    private void LoadFirefoxSTMAProfile() => LoadFirefoxProfile("STMA");
+    private void LoadFirefoxTALBProfile() => LoadFirefoxProfile("TALB");
+    private void LoadFirefoxWASHProfile() => LoadFirefoxProfile("WASH");
+    private void LoadFirefoxWICOProfile() => LoadFirefoxProfile("WICO");
+    private void LoadFirefoxWORCProfile() => LoadFirefoxProfile("WORC");
+    private void LoadFirefoxProfile(string county)
     {
         ErrorsList.Clear();
         FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
@@ -68,7 +181,7 @@
         DialogResult res = folderBrowserDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            SettingsWriter.AddOrUpdateAppSetting("DriverPathSettings:FirefoxProfilePath", folderBrowserDialog.SelectedPath);
+            SettingsWriter.AddOrUpdateAppSetting($"DriverPathSettings:Firefox{county}ProfilePath", folderBrowserDialog.SelectedPath);
         }
         else
         {
@@ -81,26 +194,27 @@
         {
             try
             {
-                var filePath = Path.Combine(System.AppContext.BaseDirectory, "appsettings.json"); 
-                string json = File.ReadAllText(filePath); 
-                JsonObject jsonObj = JsonSerializer.Deserialize<JsonObject>(json); 
+                var filePath = Path.Combine(System.AppContext.BaseDirectory, "appsettings.json");
+                string json = File.ReadAllText(filePath);
+                JsonObject jsonObj = JsonSerializer.Deserialize<JsonObject>(json);
                 SetValueRecursively(sectionPathKey, jsonObj, value);
-                string output = JsonSerializer.Serialize(jsonObj, new JsonSerializerOptions() { WriteIndented = true }); 
+                string output = JsonSerializer.Serialize(jsonObj, new JsonSerializerOptions() { WriteIndented = true });
                 File.WriteAllText(filePath, output);
             }
-            catch (Exception ex) { 
-                Console.WriteLine($"Error writing app settings | {0}", ex.Message); 
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error writing app settings | {0}", ex.Message);
             }
         }
 
         private static void SetValueRecursively(string sectionPathKey, JsonNode jsonObj, string value)
         { // split the string at the first ':' character
-            var remainingSections = sectionPathKey.Split(":", 2); 
-            var currentSection = remainingSections[0]; 
+            var remainingSections = sectionPathKey.Split(":", 2);
+            var currentSection = remainingSections[0];
             if (remainingSections.Length > 1)
             {
                 // continue with the procress, moving down the tree
-                var nextSection = remainingSections[1]; 
+                var nextSection = remainingSections[1];
                 SetValueRecursively(nextSection, jsonObj[currentSection], value);
             }
             else

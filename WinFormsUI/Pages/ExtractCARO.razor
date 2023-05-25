@@ -2,10 +2,12 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
+@using DataLibrary.Extractors;
 @inject CAROExtractController controller
 @inject CAROExtractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
-@if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxProfilePath) ||
+@inject IOptionsMonitor<RazorPageSettings> razorPageSettings
+@if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxCAROProfilePath) ||
    String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
 {
     <div class="row mb-3 mt-3">
@@ -48,7 +50,7 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        AmountToExtract = 0;
+        AmountToExtract = razorPageSettings.CurrentValue.Amount;
         this.controller.JobFinishedEvent += JobFinishedEventHandler;
 
         return base.OnInitializedAsync();

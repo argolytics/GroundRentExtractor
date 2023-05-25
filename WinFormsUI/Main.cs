@@ -7,6 +7,7 @@ using DataLibrary.Services;
 using DataLibrary.AutoMapperProfiles;
 using AutoMapper;
 using DataLibrary.Settings;
+using DataLibrary.Extractors;
 
 namespace WinFormsUI;
 
@@ -23,6 +24,8 @@ public partial class Main : Form
         services.AddSingleton(new BlobService(azureBlobStorageConnectionString));
         services.Configure<DriverPathSettings>(Program.Configuration.GetSection("DriverPathSettings"));
         services.Configure<BlobSettings>(Program.Configuration.GetSection("BlobSettings"));
+        services.Configure<WebPageStringSettings>(Program.Configuration.GetSection("WebPageStringSettings"));
+        services.Configure<RazorPageSettings>(Program.Configuration.GetSection("RazorPageSettings"));
         services.AddWindowsFormsBlazorWebView();
         services.AddBlazorWebViewDeveloperTools();
         // Data service factories
