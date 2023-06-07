@@ -7,18 +7,15 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using DataLibrary.Services;
 
-namespace DataLibrary.Extractors;
+namespace DataLibrary.Services;
 
-public class CAROExtractor
+public class Extractor
 {
     private readonly IDataContext _dataContext;
-    private readonly CARODataServiceFactory _caroDataServiceFactory;
-    private readonly ExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
+    private IDataServiceFactory _dataServiceFactory;
+    private readonly IExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
     private readonly BlobService _blobService;
-    private readonly IOptionsMonitor<BlobSettings> _blobSettings;
-    private readonly IOptionsMonitor<DriverPathSettings> _pathSettings;
     private readonly IOptionsMonitor<WebPageStringSettings> _webPageStringSettings;
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
@@ -32,57 +29,52 @@ public class CAROExtractor
         TransactionFailCouldNotDeleteAddress,
         DateTimeFiledIsNull
     }
-    private readonly string County = "CARO";
+    private string County;
+    private string FirefoxDriverPath;
+    private string GeckoDriverPath;
+    private string DropDownSelect;
+    private string BlobContainer;
+    private string BaseUrlWindow;
     private List<AddressModel> AddressList = new();
     private bool? dbTransactionResultBool = null;
-    private bool? allDataDownloadedBool = true;
-    private bool? objectDisposedExceptionBool = null;
-    private bool? noSuchWindowExceptionBool = null;
-    private int exceptionCount = 0;
+    private bool? majorExceptionRequiringSetupDriver = null;
     private int currentCount = 0;
     private int accumulatedCount = 0;
     private int totalCount = 0;
     private decimal elapsedTime = 0;
     private decimal accumulatedElapsedTime = 0;
 
-    public CAROExtractor(
+    public Extractor(
         IDataContext dataContext,
-        CARODataServiceFactory caroDataServiceFactory,
-        ExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
+        IExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
         BlobService blobService,
-        IOptionsMonitor<BlobSettings> blobSettings,
-        IOptionsMonitor<DriverPathSettings> pathSettings,
         IOptionsMonitor<WebPageStringSettings> webPageStringSettings)
     {
         _dataContext = dataContext;
-        _caroDataServiceFactory = caroDataServiceFactory;
         _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
         _blobService = blobService;
-        _blobSettings = blobSettings;
-        _pathSettings = pathSettings;
         _webPageStringSettings = webPageStringSettings;
     }
 
-    private void SetupDriver(IOptionsMonitor<DriverPathSettings> pathSettings)
+    private void SetupDriver(string firefoxDriverPath, string geckoDriverPath)
     {
         try
         {
-            if (!string.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxCAROProfilePath) && !string.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
+            if (!string.IsNullOrEmpty(firefoxDriverPath) && !string.IsNullOrEmpty(geckoDriverPath))
             {
-                FirefoxProfile firefoxProfile = new(pathSettings.CurrentValue.FirefoxCAROProfilePath);
+                FirefoxProfile firefoxProfile = new(firefoxDriverPath);
                 FirefoxOptions FirefoxOptions = new()
                 {
                     Profile = firefoxProfile,
                 };
                 //firefoxOptions.AddArguments("--headless");
-                FirefoxDriver = new FirefoxDriver(pathSettings.CurrentValue.GeckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(60));
+                FirefoxDriver = new FirefoxDriver(geckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(60));
                 WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(10));
                 WebDriverWait.IgnoreExceptionTypes(
                     typeof(NoSuchElementException),
                     typeof(StaleElementReferenceException),
                     typeof(ElementNotSelectableException),
                     typeof(ElementNotVisibleException));
-
             }
         }
         catch (Exception ex)
@@ -90,33 +82,44 @@ public class CAROExtractor
             Serilog.Log.Error($"{County}: " + ex.ToString());
         }
     }
-
-    public Task Extract(int amountToExtract)
+    public async Task Extract(
+        IDataServiceFactory dataServiceFactory,
+        string county,
+        string firefoxDriverPath,
+        string geckoDriverPath,
+        string dropDownSelect,
+        string blobContainer,
+        int count,
+        CancellationToken cancellationToken)
     {
-        return Extract(amountToExtract, new CancellationTokenSource().Token);
-    }
-    public async Task Extract(int remainingCount, CancellationToken cancellationToken)
-    {
-        if (FirefoxDriver == null && WebDriverWait == null)
+        if (FirefoxDriver == null && WebDriverWait == null ||
+            majorExceptionRequiringSetupDriver is true)
         {
-            SetupDriver(_pathSettings);
+            SetupDriver(firefoxDriverPath, geckoDriverPath);
+            majorExceptionRequiringSetupDriver = null;
         }
-        // Define baseUrlWindow
-        var baseUrlWindow = FirefoxDriver.CurrentWindowHandle;
+        _dataServiceFactory = dataServiceFactory;
+        County = county;
+        FirefoxDriverPath = firefoxDriverPath;
+        GeckoDriverPath = geckoDriverPath;
+        DropDownSelect = dropDownSelect;
+        BlobContainer = blobContainer;
+        BaseUrlWindow = FirefoxDriver.CurrentWindowHandle;
+        CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
         // Read and populate address list
         using (var uow = _dataContext.CreateUnitOfWork())
         {
-            var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-            AddressList = await caroDataService.ReadAddressTopAmountWhereIsGroundRentNull(remainingCount);
+            var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+            AddressList = await dataService.ReadAddressTopAmountWhereIsGroundRentNull(count);
         }
         if (AddressList.Count == 0)
         {
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
-            Serilog.Log.Information($"{County} complete.");
+            Serilog.Log.Error($"{County} finished.");
         }
         currentCount = 0;
-        totalCount = remainingCount + accumulatedCount;
+        totalCount = count + accumulatedCount;
         var stopWatch = ValueStopwatch.StartNew();
         try
         {
@@ -127,23 +130,58 @@ public class CAROExtractor
                 {
                     break;
                 }
-                // Selecting appropriate county
+                // Select appropriate county
                 FirefoxDriver.Navigate().GoToUrl(_webPageStringSettings.CurrentValue.BaseUrl);
-                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(_webPageStringSettings.CurrentValue.CARODropDownSelect)));
+                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(dropDownSelect)));
                 Input.Click();
-                // Selecting "PROPERTY ACCOUNT IDENTIFIER"
+                // Select Property Account Identifier
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(_webPageStringSettings.CurrentValue.PropertyAccountIdentifierSelect)));
                 Input.Click();
                 // Click Continue button
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(_webPageStringSettings.CurrentValue.ContinueClick)));
                 Input.Click();
-                // Input District and AccountNumber
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.DistrictInput)));
-                Input.Clear();
-                Input.SendKeys(iterAddress.Ward);
-                Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.AccountNumberInput)));
-                Input.Clear();
-                Input.SendKeys(iterAddress.AccountNumber);
+                if (County == "ANNE")
+                {
+                    // Define Subdivision and ANNE-Specific AccountNumber
+                    string Subdivision = iterAddress.AccountNumber.Substring(0, 4).Trim();
+                    string AccountNumber = iterAddress.AccountNumber.Substring(4).Trim();
+                    // Input District, Subdivision, and AccountNumber
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.DistrictInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Ward);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.SubdivisionInput)));
+                    Input.Clear();
+                    Input.SendKeys(Subdivision);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.AccountNumberInput)));
+                    Input.Clear();
+                    Input.SendKeys(AccountNumber);
+                }
+                else if (County == "BACI")
+                {
+                    // Input Ward, Section, Block, and Lot
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.WardInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Ward);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.SectionInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Section);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.BlockInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Block);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.LotInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Lot);
+                }
+                else
+                {
+                    // Input District and AccountNumber
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.DistrictInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.Ward);
+                    Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.AccountNumberInput)));
+                    Input.Clear();
+                    Input.SendKeys(iterAddress.AccountNumber);
+                }
                 // Click Next button
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(_webPageStringSettings.CurrentValue.NextClick)));
                 Input.Click();
@@ -156,8 +194,8 @@ public class CAROExtractor
                     {
                         using (var uow = _dataContext.CreateUnitOfWork())
                         {
-                            var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-                            dbTransactionResultBool = await caroDataService.DeleteAddress(iterAddress.AccountId);
+                            var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                            dbTransactionResultBool = await dataService.DeleteAddress(iterAddress.AccountId);
                         }
                         currentCount++;
                         AddressList.Remove(iterAddress);
@@ -184,11 +222,11 @@ public class CAROExtractor
                         if (FirefoxDriver.FindElement(By.CssSelector(_webPageStringSettings.CurrentValue.GroundRentErrorTag))
                             .Text.Contains(_webPageStringSettings.CurrentValue.NoGroundRentMessage))
                         {
-                            // Property is fee simple (not ground rent)
+                            // Property is not ground rent
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await caroDataService.UpdateAddress(new AddressModel()
+                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
                                 {
                                     AccountId = iterAddress.AccountId,
                                     County = iterAddress.County,
@@ -246,12 +284,11 @@ public class CAROExtractor
                                 groundRentPdfModel.AccountId = iterAddress.AccountId;
                                 string? dateTimeFiledString = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DateTimeFiledTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
                                 // DateTimeFiled cannot be null since it is used as the sql table's Primary Key
-                                // so we check for null here. If null, we skip metadata and pdf download but make note in log
+                                // so we check for null here. If null, we skip metadata and PDF download but make note in log
                                 if (dateTimeFiledString is null)
                                 {
                                     await LogException(iterAddress.AccountId, ExceptionLog.DateTimeFiledIsNull.ToString());
                                     Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.DateTimeFiledIsNull.ToString());
-                                    allDataDownloadedBool = false;
                                     metadataCollectionCurrentCount++;
                                     continue;
                                 }
@@ -259,10 +296,7 @@ public class CAROExtractor
                                 // so that DateTime.TryParse can parse dateTimeFiledString
                                 if (dateTimeFiledString[0] != '1')
                                 {
-                                    if (!dateTimeFiledString.StartsWith("1/"))
-                                    {
-                                        dateTimeFiledString = '0' + dateTimeFiledString;
-                                    }
+                                    if (!dateTimeFiledString.StartsWith("1/")) dateTimeFiledString = '0' + dateTimeFiledString;
                                 }
                                 DateTime? DateTimeFiled = DateTime.TryParse(dateTimeFiledString, out DateTime tempDate) ? tempDate : null;
                                 groundRentPdfModel.DateTimeFiled = DateTimeFiled;
@@ -278,8 +312,8 @@ public class CAROExtractor
                                 groundRentPdfModel.YearRecorded = yearRecordedResult;
                                 using (var uow = _dataContext.CreateUnitOfWork())
                                 {
-                                    var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-                                    dbTransactionResultBool = await caroDataService.CreateGroundRentPdf(new GroundRentPdfModel()
+                                    var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                                    dbTransactionResultBool = await dataService.CreateGroundRentPdf(new GroundRentPdfModel()
                                     {
                                         AccountId = groundRentPdfModel.AccountId,
                                         AddressId = groundRentPdfModel.AddressId,
@@ -297,82 +331,71 @@ public class CAROExtractor
                                 {
                                     await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
                                     Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
-                                    allDataDownloadedBool = false;
                                     metadataCollectionCurrentCount++;
-                                    // If we cannot store metadata, we do not want the accompanying pdf, so we continue here
+                                    // If we cannot store metadata, we do not want the accompanying PDF, so we continue here
                                     continue;
                                 }
                                 metadataCollectionCurrentCount++;
-                                // Double check at the top of PDF-opening to close any previously-lingering PDF windows
-                                while (FirefoxDriver.WindowHandles.Count != 1)
-                                {
-                                    foreach (string window in FirefoxDriver.WindowHandles)
-                                    {
-                                        if (baseUrlWindow != window)
-                                        {
-                                            FirefoxDriver.Close();
-                                        }
-                                    }
-                                }
-                                // Click and open pdf
+                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                                // Click and open PDF
                                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
                                 Input.Click();
-                                // Switch to pdf window
+                                // Switch to PDF window
                                 foreach (string window in FirefoxDriver.WindowHandles)
                                 {
-                                    if (baseUrlWindow != window)
+                                    if (BaseUrlWindow != window)
                                     {
                                         FirefoxDriver.SwitchTo().Window(window);
-                                        if (WebDriverWait.Until(FirefoxDriver => ((IJavaScriptExecutor)FirefoxDriver).ExecuteScript("return document.readyState").Equals("complete")))
+                                        try
                                         {
-                                            // Upload pdf to blob storage
-                                            PrintOptions printOptions = new();
-                                            //FirefoxDriver.Print(printOptions).SaveAsFile($"{PdfSaveFilePath}{groundRentPdfModel.AccountId}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf");
-                                            var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
-                                            var printDocument = FirefoxDriver.Print(printOptions);
-                                            var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
-                                            if (await _blobService.UploadBlob(pdfFileName, printDocument, _blobSettings.CurrentValue.CAROContainer))
-                                            {
-                                                pdfDownloadCount++;
-                                            }
-                                            else
+                                            IJavaScriptExecutor jsDriver = FirefoxDriver;
+                                            if (jsDriver is null)
                                             {
                                                 await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                                 Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                                allDataDownloadedBool = false;
+                                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                                                break;
                                             }
-                                            groundRentPdfModelList = new();
-                                            // Close pdf window and switch back to baseUrlWindow
-                                            FirefoxDriver.Close();
-                                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
+                                            if (WebDriverWait.Until(FirefoxDriver => jsDriver.ExecuteScript("return document.readyState").Equals("complete")))
+                                            {
+                                                // Upload PDF to blob storage
+                                                PrintOptions printOptions = new();
+                                                var printDocument = FirefoxDriver.Print(printOptions);
+                                                var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
+                                                var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
+                                                if (await _blobService.UploadBlob(pdfFileName, printDocument, blobContainer))
+                                                {
+                                                    pdfDownloadCount++;
+                                                }
+                                                else
+                                                {
+                                                    Serilog.Log.Information($"{County} accountId {iterAddress.AccountId}: {pdfFileName} already exists in the blob container.");
+                                                    break;
+                                                }
+                                            }
                                         }
-                                        else
+                                        catch (WebDriverTimeoutException)
                                         {
                                             await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
                                             Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                            allDataDownloadedBool = false;
-                                            // Close pdf window and switch back to baseUrlWindow
-                                            FirefoxDriver.Close();
-                                            WebDriverWait.Until(FireFoxDriver => FirefoxDriver.WindowHandles.Count == 1);
-                                            FirefoxDriver.SwitchTo().Window(baseUrlWindow);
+                                            CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                                            break;
                                         }
                                     }
                                 }
+                                groundRentPdfModelList = new();
+                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
                             }
                         }
-                        // Ensure all pdf windows are closed, then switch to baseUrlWindow
-                        foreach (string window in FirefoxDriver.WindowHandles)
-                        {
-                            if (baseUrlWindow != window) FirefoxDriver.Close();
-                        }
-                        FirefoxDriver.SwitchTo().Window(baseUrlWindow);
-                        // Check if all metadata and pdfs stored in db
-                        if (allDataDownloadedBool is true)
+                        CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                        // Check if all PDFs have been downloaded by checking against the true amount of metadata table rows
+                        var pdfTotalCount = metadataCollectionTotalCount - 2;
+                        if (pdfDownloadCount == pdfTotalCount)
                         {
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await caroDataService.UpdateAddress(new AddressModel()
+                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
                                 {
                                     AccountId = iterAddress.AccountId,
                                     County = iterAddress.County,
@@ -385,7 +408,7 @@ public class CAROExtractor
                                     YearBuilt = iterAddress.YearBuilt,
                                     IsGroundRent = true,
                                     IsRedeemed = iterAddress.IsRedeemed,
-                                    PdfCount = pdfDownloadCount,
+                                    PdfCount = pdfTotalCount,
                                     AllDataDownloaded = true
                                 });
                             }
@@ -395,13 +418,13 @@ public class CAROExtractor
                                 Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
                             }
                         }
-                        // pdf download count or metadata collection current are not count equal to pdf total count
+                        // PDF download count or metadata collection current are not count equal to PDF total count
                         else
                         {
                             using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                var caroDataService = _caroDataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await caroDataService.UpdateAddress(new AddressModel()
+                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
                                 {
                                     AccountId = iterAddress.AccountId,
                                     County = iterAddress.County,
@@ -414,7 +437,7 @@ public class CAROExtractor
                                     YearBuilt = iterAddress.YearBuilt,
                                     IsGroundRent = true,
                                     IsRedeemed = iterAddress.IsRedeemed,
-                                    PdfCount = pdfDownloadCount,
+                                    PdfCount = pdfTotalCount,
                                     AllDataDownloaded = false
                                 });
                             }
@@ -429,91 +452,77 @@ public class CAROExtractor
                     }
                 }
             }
+            Serilog.Log.Information($"{County}: batch complete.");
+            ReportTotals(stopWatch);
+        }
+        catch (ElementClickInterceptedException e)
+        {
+            Serilog.Log.Error($"{County} minor exception. Restarting. {e}");
             accumulatedCount += currentCount;
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            ReportTotals(accumulatedCount, totalCount, accumulatedElapsedTime);
+            var remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, cancellationToken);
         }
-        catch (WebDriverTimeoutException)
+        catch (StaleElementReferenceException e)
         {
-            Serilog.Log.Information($"{County}: Timed out after 10 seconds. Restarting.");
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
+            Serilog.Log.Error($"{County} minor exception. Restarting. {e}");
+            accumulatedCount += currentCount;
+            var remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, cancellationToken);
         }
-        catch (ElementClickInterceptedException elementClickInterceptedException)
+        catch (NoSuchWindowException e)
         {
-            exceptionCount++;
-            var exceptionMessage = elementClickInterceptedException.Message;
-            Serilog.Log.Error($"{County} exception count: {exceptionCount} / 5. {exceptionMessage}");
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
+            majorExceptionRequiringSetupDriver = true;
+            Serilog.Log.Error($"{County} critical exception. Quitting and restarting. {e}");
+            accumulatedCount += currentCount;
+            var remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, cancellationToken);
         }
-        catch (StaleElementReferenceException staleElementReferenceException)
+        catch (ObjectDisposedException e)
         {
-            exceptionCount++;
-            var exceptionMessage = staleElementReferenceException.Message;
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
-        }
-        catch (NoSuchWindowException noSuchWindowException)
-        {
-            var exceptionMessage = noSuchWindowException.Message;
-            Serilog.Log.Error($"{County} critical exception: Do not restart {County}. {exceptionMessage}");
-            noSuchWindowExceptionBool = true;
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
-        }
-        catch (ObjectDisposedException objectDisposedException)
-        {
-            var exceptionMessage = objectDisposedException.Message;
-            Serilog.Log.Error($"{County} critical exception: Do not restart {County}. {exceptionMessage}");
-            objectDisposedExceptionBool = true;
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
-        }
-        catch (Azure.RequestFailedException requestFailedException)
-        {
-            var exceptionMessage = requestFailedException.Message;
-            Serilog.Log.Information($"{County}: {exceptionMessage}");
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
+            majorExceptionRequiringSetupDriver = true;
+            Serilog.Log.Error($"{County} critical exception. Quitting and restarting. {e}");
+            accumulatedCount += currentCount;
+            var remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, cancellationToken);
         }
         catch (Exception e)
         {
-            exceptionCount++;
-            var exceptionMessage = e.Message;
-            Serilog.Log.Error($"{County} exception count: {exceptionCount} / 5. {exceptionMessage}");
-            accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
-            await AdjustCountAndRestartOrQuit(exceptionCount, accumulatedElapsedTime, cancellationToken);
+            Serilog.Log.Error($"{County} exception: {e.Message}. Restarting.");
+            accumulatedCount += currentCount;
+            var remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, cancellationToken);
         }
+    }
+    private void ReportTotals(ValueStopwatch stopWatch)
+    {
+        accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
+        var percentComplete = totalCount == 0 ? 0 : decimal.Divide(accumulatedCount, totalCount);
+        var addressesProcessedPerMinute = (int)decimal.Divide(accumulatedCount, accumulatedElapsedTime);
+        Serilog.Log.Information($"{County}: {percentComplete:P0} of {totalCount} completed. {addressesProcessedPerMinute} average per minute.");
+    }
+    private async Task RestartExtract(int count, CancellationToken cancellationToken)
+    {
+        AddressList.Clear();
+        await Extract(
+            _dataServiceFactory,
+            County,
+            FirefoxDriverPath,
+            GeckoDriverPath,
+            DropDownSelect,
+            BlobContainer,
+            count,
+            cancellationToken);
     }
     private decimal CalculateElapsedTime(ValueStopwatch stopWatch)
     {
         elapsedTime = (decimal)stopWatch.GetElapsedTime().TotalMinutes;
         accumulatedElapsedTime += elapsedTime;
         return accumulatedElapsedTime;
-    }
-    private async Task AdjustCountAndRestartOrQuit(int exceptionCount, decimal accumulatedElapsedTime, CancellationToken cancellationToken)
-    {
-        accumulatedCount += currentCount;
-        var remainingCount = totalCount - accumulatedCount;
-        ReportTotals(accumulatedCount, totalCount, accumulatedElapsedTime);
-        if (exceptionCount == 5 || noSuchWindowExceptionBool is true || objectDisposedExceptionBool is true)
-        {
-            FirefoxDriver.Quit();
-        }
-        await RestartExtract(remainingCount, cancellationToken);
-    }
-    private async Task RestartExtract(int remainingCount, CancellationToken cancellationToken)
-    {
-        AddressList.Clear();
-        await Extract(remainingCount, cancellationToken);
-    }
-    private void ReportTotals(int accumulatedCount, int totalCount, decimal accumulatedElapsedTime)
-    {
-        var percentComplete = totalCount == 0 ? 0 : decimal.Divide(accumulatedCount, totalCount);
-        var addressesProcessedPerMinute = (int)decimal.Divide(accumulatedCount, accumulatedElapsedTime);
-        Serilog.Log.Information($"{County} report: {percentComplete:P0} processed out of {totalCount} total.");
-        Serilog.Log.Information($"{County} report: {addressesProcessedPerMinute} processed on average per minute.");
     }
     public async Task LogException(string accountId, string exception)
     {
@@ -527,5 +536,14 @@ public class CAROExtractor
             var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
             await exceptionLogDataService.Create(exceptionLogModel);
         }
+    }
+    private void CloseAllButBaseUrlWindow(System.Collections.ObjectModel.ReadOnlyCollection<string> windows)
+    {
+        foreach (string window in windows)
+        {
+            FirefoxDriver.SwitchTo().Window(window);
+            if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+        }
+        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
     }
 }

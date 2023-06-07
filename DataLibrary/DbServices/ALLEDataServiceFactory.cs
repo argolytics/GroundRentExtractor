@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class ALLEDataServiceFactory
+public class ALLEDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new ALLESqlDataService(uow);
 }

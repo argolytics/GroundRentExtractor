@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class PRINDataServiceFactory
+public class PRINDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new PRINSqlDataService(uow);
 }

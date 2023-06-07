@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class CHARDataServiceFactory
+public class CHARDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new CHARSqlDataService(uow);
 }

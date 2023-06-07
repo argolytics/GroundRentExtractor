@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class DORCDataServiceFactory
+public class DORCDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new DORCSqlDataService(uow);
 }

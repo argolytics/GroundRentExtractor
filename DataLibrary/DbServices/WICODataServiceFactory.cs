@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class WICODataServiceFactory
+public class WICODataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new WICOSqlDataService(uow);
 }

@@ -1,14 +1,17 @@
 ﻿@page "/extractBACI"
+@using DataLibrary.DbServices;
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@using DataLibrary.Extractors;
-@inject BACIExtractController controller 
-@inject BACIExtractor extractor
+@inject ExtractController controller
+@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
-@if(String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxBACIProfilePath) ||
-    String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
+@inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
+@inject IOptionsMonitor<BlobSettings> blobSettings
+
+@if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxBACIProfilePath) ||
+ String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
 {
     <div class="row mb-3 mt-3">
         <div class="container">
@@ -17,30 +20,49 @@
             </div>
         </div>
     </div>
-    
+
 }
 else
 {
     <div class="row mb-3 mt-3">
         <div class="container">
+            <h3>BACI</h3>
+        </div>
+        <div class="container">
             <div>
-                <EditForm Model="@AmountToExtract">
+                <EditForm Model="@Amount">
                     <label>Amount</label>
-                    <InputNumber TValue="int" @bind-Value="@AmountToExtract" DisplayName="Amount">@AmountToExtract</InputNumber>
+                    <InputNumber TValue="int" @bind-Value="@Amount" DisplayName="Amount">@Amount</InputNumber>
                 </EditForm>
-                <button class="btn btn-primary" type="submit" disabled="@(controller.Running)" @onclick="() => Extract(AmountToExtract)">Extract</button>
+                <button class="btn btn-primary" type="submit" disabled="@(controller.Running)" @onclick="() => Extract(Amount)">Extract</button>
+                <button class="btn btn-danger" type="submit" disabled="@(!controller.Running)" @onclick="() => Quit()">Quit</button>
             </div>
         </div>
     </div>
 }
 
 @code {
+    private int Amount { get; set; }
 
-    private int AmountToExtract { get; set; }
-    private async Task Extract(int amountToExtract)
+    private async Task Extract(int amount)
     {
-        await controller.StartBACIExtract(extractor, AmountToExtract);
-        StateHasChanged(); 
+        BACIDataServiceFactory dataServiceFactory = new();
+        await controller.StartExtract(
+            extractor,
+            dataServiceFactory,
+            "BACI",
+            pathSettings.CurrentValue.FirefoxBACIProfilePath,
+            pathSettings.CurrentValue.GeckoDriverPath,
+            webPageStringSettings.CurrentValue.BACIDropDownSelect,
+            blobSettings.CurrentValue.BACIContainer,
+            Amount);
+        StateHasChanged();
+    }
+
+    private void Quit()
+    {
+        controller.Cancel();
+        StateHasChanged();
     }
 
     private void JobFinishedEventHandler(object sender, EventArgs args)
@@ -50,8 +72,8 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        AmountToExtract = razorPageSettings.CurrentValue.Amount;
-        this.controller.JobFinishedEvent += JobFinishedEventHandler;
+        Amount = razorPageSettings.CurrentValue.BACIBACOAmount;
+        this.controller.JobFinished += JobFinishedEventHandler;
 
         return base.OnInitializedAsync();
     }

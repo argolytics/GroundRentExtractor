@@ -21,9 +21,8 @@ public class BlobService
             await blob.UploadAsync(stream);
             return true;
         }
-        catch (Exception ex)
+        catch (Azure.RequestFailedException)
         {
-            Serilog.Log.Error(ex.ToString());
             return false;
         }
     }

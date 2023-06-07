@@ -9,120 +9,123 @@
 
 <PageTitle>Settings</PageTitle>
 <div class="row mb-3 mt-3">
-    <div class="container mt-3">
-        <div>
-            <button class="btn btn-primary" @onclick="LoadGeckoDriver">GeckoDriver</button>
-            <label style="color:green">@pathSettings.CurrentValue.GeckoDriverPath</label>
-        </div>
-        <br />
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxALLEProfile">ALLE Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxALLEProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxANNEProfile">ANNE Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxANNEProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxBACIProfile">BACI Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxBACIProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxBACOProfile">BACO Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxBACOProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxCALVProfile">CALV Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxCALVProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxCAROProfile">CARO Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxCAROProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxCARRProfile">CARR Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxCARRProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxCECIProfile">CECI Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxCECIProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxCHARProfile">CHAR Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxCHARProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxDORCProfile">DORC Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxDORCProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxFREDProfile">FRED Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxFREDProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxGARRProfile">GARR Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxGARRProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxHARFProfile">HARF Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxHARFProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxHOWAProfile">HOWA Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxHOWAProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxKENTProfile">KENT Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxKENTProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxMONTProfile">MONT Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxMONTProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxPRINProfile">PRIN Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxPRINProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxQUEEProfile">QUEE Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxQUEEProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxSOMEProfile">SOME Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxSOMEProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxSTMAProfile">STMA Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxSTMAProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxTALBProfile">TALB Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxTALBProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxWASHProfile">WASH Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxWASHProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxWICOProfile">WICO Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxWICOProfilePath</label>
-        </div>
-        <div>
-            <button class="btn btn-primary" @onclick="LoadFirefoxWORCProfile">WORC Profile</button>
-            <label style="color:green">@pathSettings.CurrentValue.FirefoxWORCProfilePath</label>
+    <div class="column mb-3 mt-3">
+        <div class="container mt-3">
+            <div>
+                <button class="btn btn-primary" @onclick="LoadGeckoDriver">GeckoDriver</button>
+                <label style="color:green">@pathSettings.CurrentValue.GeckoDriverPath</label>
+            </div>
+            <br />
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxALLEProfile">ALLE Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxALLEProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxANNEProfile">ANNE Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxANNEProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxBACIProfile">BACI Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACIProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxBACOProfile">BACO Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACOProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxCALVProfile">CALV Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxCALVProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxCAROProfile">CARO Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxCAROProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxCARRProfile">CARR Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxCARRProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxCECIProfile">CECI Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxCECIProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxCHARProfile">CHAR Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxCHARProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxDORCProfile">DORC Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxDORCProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxFREDProfile">FRED Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxFREDProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxGARRProfile">GARR Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxGARRProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxHARFProfile">HARF Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxHARFProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxHOWAProfile">HOWA Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxHOWAProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxKENTProfile">KENT Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxKENTProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxMONTProfile">MONT Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxMONTProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxPRINProfile">PRIN Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxPRINProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxQUEEProfile">QUEE Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxQUEEProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxSOMEProfile">SOME Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxSOMEProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxSTMAProfile">STMA Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxSTMAProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxTALBProfile">TALB Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxTALBProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxWASHProfile">WASH Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxWASHProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxWICOProfile">WICO Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxWICOProfilePath</label>
+            </div>
+            <div>
+                <button class="btn btn-primary" @onclick="LoadFirefoxWORCProfile">WORC Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxWORCProfilePath</label>
+            </div>
         </div>
     </div>
-    @if (ErrorsList.Count > 0)
-    {
-        <h2>ErrorsList</h2>
-        <ul class="text-danger">
-            @foreach (var error in ErrorsList)
-            {
-                <li>@error</li>
-            }
-        </ul>
-    }
 </div>
+
+@if (ErrorsList.Count > 0)
+{
+    <h2>ErrorsList</h2>
+    <ul class="text-danger">
+        @foreach (var error in ErrorsList)
+        {
+            <li>@error</li>
+        }
+    </ul>
+}
 
 @code {
     private List<string> ErrorsList = new();
@@ -203,7 +206,7 @@
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error writing app settings | {0}", ex.Message);
+                Serilog.Log.Information($"Error writing app settings | {0}", ex.Message);
             }
         }
 

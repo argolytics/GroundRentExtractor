@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class HOWADataServiceFactory
+public class HOWADataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new HOWASqlDataService(uow);
 }

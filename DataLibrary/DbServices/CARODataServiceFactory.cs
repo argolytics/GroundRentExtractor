@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class CARODataServiceFactory
+public class CARODataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new CAROSqlDataService(uow);
 }

@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class FREDDataServiceFactory
+public class FREDDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new FREDSqlDataService(uow);
 }

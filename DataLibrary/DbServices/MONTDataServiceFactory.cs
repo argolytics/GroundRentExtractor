@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class MONTDataServiceFactory
+public class MONTDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new MONTSqlDataService(uow);
 }

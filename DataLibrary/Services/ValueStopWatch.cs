@@ -22,5 +22,7 @@ public readonly struct ValueStopwatch
         return new TimeSpan(ticks);
     }
 
+
+
     public TimeSpan GetElapsedTime() => GetElapsedTime(_startTimestamp, GetTimestamp());
 }

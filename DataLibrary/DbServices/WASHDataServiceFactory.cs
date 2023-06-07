@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class WASHDataServiceFactory
+public class WASHDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new WASHSqlDataService(uow);
 }

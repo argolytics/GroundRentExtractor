@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class GARRDataServiceFactory
+public class GARRDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new GARRSqlDataService(uow);
 }

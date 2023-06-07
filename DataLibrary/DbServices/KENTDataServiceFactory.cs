@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class KENTDataServiceFactory
+public class KENTDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new KENTSqlDataService(uow);
 }

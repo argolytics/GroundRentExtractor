@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class BACODataServiceFactory
+public class BACODataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new BACOSqlDataService(uow);
 }

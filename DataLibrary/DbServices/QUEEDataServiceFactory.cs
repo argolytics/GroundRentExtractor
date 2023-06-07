@@ -2,7 +2,7 @@
 
 namespace DataLibrary.DbServices;
 
-public class QUEEDataServiceFactory
+public class QUEEDataServiceFactory : IDataServiceFactory
 {
     public IExtractorDataService CreateExtractorDataService(IUnitOfWork uow) => new QUEESqlDataService(uow);
 }
