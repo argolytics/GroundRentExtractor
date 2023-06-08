@@ -37,9 +37,9 @@ public class Extractor
     private string BaseUrlWindow;
     private List<AddressModel> AddressList = new();
     private bool? dbTransactionResultBool = null;
-    private bool? majorExceptionRequiringSetupDriver = null;
     private int currentCount = 0;
     private int accumulatedCount = 0;
+    private int remainingCount;
     private int totalCount = 0;
     private decimal elapsedTime = 0;
     private decimal accumulatedElapsedTime = 0;
@@ -92,11 +92,9 @@ public class Extractor
         int count,
         CancellationToken cancellationToken)
     {
-        if (FirefoxDriver == null && WebDriverWait == null ||
-            majorExceptionRequiringSetupDriver is true)
+        if (FirefoxDriver == null && WebDriverWait == null)
         {
             SetupDriver(firefoxDriverPath, geckoDriverPath);
-            majorExceptionRequiringSetupDriver = null;
         }
         _dataServiceFactory = dataServiceFactory;
         County = county;
@@ -104,32 +102,33 @@ public class Extractor
         GeckoDriverPath = geckoDriverPath;
         DropDownSelect = dropDownSelect;
         BlobContainer = blobContainer;
+        // Set BaseUrlWindow
         BaseUrlWindow = FirefoxDriver.CurrentWindowHandle;
-        CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
-        // Read and populate address list
-        using (var uow = _dataContext.CreateUnitOfWork())
+        // This if condition ensures the db will only be read once, otherwise use existing AddressList
+        if (AddressList.Count == 0)
         {
-            var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-            AddressList = await dataService.ReadAddressTopAmountWhereIsGroundRentNull(count);
+            using (var uow = _dataContext.CreateUnitOfWork())
+            {
+                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
+                AddressList = await dataService.ReadAddressTopAmountWhereIsGroundRentNull(count);
+            }
         }
+        // If after db read, all addresses for the county's db have been processed, the county is finished
         if (AddressList.Count == 0)
         {
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
             Serilog.Log.Error($"{County} finished.");
         }
-        currentCount = 0;
         totalCount = count + accumulatedCount;
+        currentCount = 0;
         var stopWatch = ValueStopwatch.StartNew();
         try
         {
             var iterList = AddressList.ToList();
             foreach (var iterAddress in iterList)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
+                if (cancellationToken.IsCancellationRequested) break;
                 // Select appropriate county
                 FirefoxDriver.Navigate().GoToUrl(_webPageStringSettings.CurrentValue.BaseUrl);
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(dropDownSelect)));
@@ -336,27 +335,26 @@ public class Extractor
                                     continue;
                                 }
                                 metadataCollectionCurrentCount++;
-                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                                foreach (string window in FirefoxDriver.WindowHandles)
+                                {
+                                    FirefoxDriver.SwitchTo().Window(window);
+                                    if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                }
+                                FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
                                 // Click and open PDF
                                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
                                 Input.Click();
-                                // Switch to PDF window
+                                // Switch to PDF window and, at any point within the try catch block, if 
+                                // the WebDriverTimeoutException occurs, catch it and break out of the foreach loop
                                 foreach (string window in FirefoxDriver.WindowHandles)
                                 {
-                                    if (BaseUrlWindow != window)
+                                    try
                                     {
-                                        FirefoxDriver.SwitchTo().Window(window);
-                                        try
+                                        if (BaseUrlWindow != window)
                                         {
-                                            IJavaScriptExecutor jsDriver = FirefoxDriver;
-                                            if (jsDriver is null)
-                                            {
-                                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
-                                                break;
-                                            }
-                                            if (WebDriverWait.Until(FirefoxDriver => jsDriver.ExecuteScript("return document.readyState").Equals("complete")))
+                                            FirefoxDriver.SwitchTo().Window(window);
+                                            IJavaScriptExecutor jsExecutor = FirefoxDriver;
+                                            if (WebDriverWait.Until(FirefoxDriver => jsExecutor.ExecuteScript("return document.readyState").Equals("complete")))
                                             {
                                                 // Upload PDF to blob storage
                                                 PrintOptions printOptions = new();
@@ -370,24 +368,41 @@ public class Extractor
                                                 else
                                                 {
                                                     Serilog.Log.Information($"{County} accountId {iterAddress.AccountId}: {pdfFileName} already exists in the blob container.");
-                                                    break;
+                                                    if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                                    FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                                    pdfDownloadCount++;
+                                                    continue;
                                                 }
                                             }
                                         }
-                                        catch (WebDriverTimeoutException)
-                                        {
-                                            await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                            Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                            CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
-                                            break;
-                                        }
+                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                    }
+                                    catch (WebDriverTimeoutException)
+                                    {
+                                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                        Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                        continue;
+                                    }
+                                    catch (NullReferenceException)
+                                    {
+                                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                        Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                        continue;
                                     }
                                 }
-                                groundRentPdfModelList = new();
-                                CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
                             }
                         }
-                        CloseAllButBaseUrlWindow(FirefoxDriver.WindowHandles);
+                        foreach (string window in FirefoxDriver.WindowHandles)
+                        {
+                            FirefoxDriver.SwitchTo().Window(window);
+                            if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                        }
+                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
                         // Check if all PDFs have been downloaded by checking against the true amount of metadata table rows
                         var pdfTotalCount = metadataCollectionTotalCount - 2;
                         if (pdfDownloadCount == pdfTotalCount)
@@ -453,47 +468,36 @@ public class Extractor
                 }
             }
             Serilog.Log.Information($"{County}: batch complete.");
-            ReportTotals(stopWatch);
-        }
-        catch (ElementClickInterceptedException e)
-        {
-            Serilog.Log.Error($"{County} minor exception. Restarting. {e}");
             accumulatedCount += currentCount;
-            var remainingCount = totalCount - accumulatedCount;
             ReportTotals(stopWatch);
-            await RestartExtract(remainingCount, cancellationToken);
-        }
-        catch (StaleElementReferenceException e)
-        {
-            Serilog.Log.Error($"{County} minor exception. Restarting. {e}");
-            accumulatedCount += currentCount;
-            var remainingCount = totalCount - accumulatedCount;
-            ReportTotals(stopWatch);
-            await RestartExtract(remainingCount, cancellationToken);
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
+            FirefoxDriver.Quit();
         }
         catch (NoSuchWindowException e)
         {
-            majorExceptionRequiringSetupDriver = true;
-            Serilog.Log.Error($"{County} critical exception. Quitting and restarting. {e}");
+            Serilog.Log.Error($"{County} critical exception: {e.Message}. Quitting.");
             accumulatedCount += currentCount;
-            var remainingCount = totalCount - accumulatedCount;
+            remainingCount = totalCount - accumulatedCount;
+            AddressList.Clear();
             ReportTotals(stopWatch);
-            await RestartExtract(remainingCount, cancellationToken);
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
+            FirefoxDriver.Quit();
         }
         catch (ObjectDisposedException e)
         {
-            majorExceptionRequiringSetupDriver = true;
-            Serilog.Log.Error($"{County} critical exception. Quitting and restarting. {e}");
+            Serilog.Log.Error($"{County} critical exception: {e.Message}. Quitting.");
             accumulatedCount += currentCount;
-            var remainingCount = totalCount - accumulatedCount;
+            remainingCount = totalCount - accumulatedCount;
+            AddressList.Clear();
             ReportTotals(stopWatch);
-            await RestartExtract(remainingCount, cancellationToken);
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
+            FirefoxDriver.Quit();
         }
         catch (Exception e)
         {
             Serilog.Log.Error($"{County} exception: {e.Message}. Restarting.");
             accumulatedCount += currentCount;
-            var remainingCount = totalCount - accumulatedCount;
+            remainingCount = totalCount - accumulatedCount;
             ReportTotals(stopWatch);
             await RestartExtract(remainingCount, cancellationToken);
         }
@@ -507,7 +511,6 @@ public class Extractor
     }
     private async Task RestartExtract(int count, CancellationToken cancellationToken)
     {
-        AddressList.Clear();
         await Extract(
             _dataServiceFactory,
             County,
@@ -536,14 +539,5 @@ public class Extractor
             var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
             await exceptionLogDataService.Create(exceptionLogModel);
         }
-    }
-    private void CloseAllButBaseUrlWindow(System.Collections.ObjectModel.ReadOnlyCollection<string> windows)
-    {
-        foreach (string window in windows)
-        {
-            FirefoxDriver.SwitchTo().Window(window);
-            if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-        }
-        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
     }
 }
