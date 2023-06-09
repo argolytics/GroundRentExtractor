@@ -374,6 +374,10 @@ public class Extractor
                                                     continue;
                                                 }
                                             }
+                                            else
+                                            {
+                                                // I've tried triggering this else condition, but the logic doesn't come here
+                                            }
                                         }
                                         if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
                                         FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
