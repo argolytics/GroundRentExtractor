@@ -4,17 +4,18 @@ namespace DataLibrary.Services
 {
     public class ExtractController : IDisposable
     {
-        public event EventHandler JobFinished;
-        private CancellationTokenSource _tokenSource;
+        public event EventHandler<JobFinishedEventArgs>? JobFinished;
 
-        private Task _worker;
+        private Dictionary<string, ExtractJob> _jobs;
 
-        public bool Running
+        public ExtractController()
         {
-            get
-            {
-                return _worker != null && !_worker.IsCompleted;
-            }
+            this._jobs = new Dictionary<string, ExtractJob>();
+        }
+
+        public bool Running(string county)
+        {
+            return _jobs.ContainsKey(county) && _jobs[county].Running;         
         }
 
         public Task StartExtract(
@@ -27,10 +28,13 @@ namespace DataLibrary.Services
             string blobContainer,
             int amount)
         {
-            if (_worker == null || _worker.IsCompleted)
+            if (!_jobs.ContainsKey(county) || _jobs[county].Worker.IsCompleted)
             {
-                _tokenSource = new CancellationTokenSource();
-                _worker = Task.Run(async () =>
+                var job = new ExtractJob();
+
+                job.TokenSource = new CancellationTokenSource();
+                job.County = county;
+                job.Worker = Task.Run(async () =>
                 {
                     await extractor.Extract(
                         dataServiceFactory,
@@ -40,31 +44,46 @@ namespace DataLibrary.Services
                         dropDownSelect,
                         blobContainer,
                         amount,
-                        _tokenSource.Token);
+                        job.TokenSource.Token);
                 });
-                OnJobFinished();
+                job.Worker.ContinueWith((o) =>
+                {
+                    this.OnJobFinished(new JobFinishedEventArgs() { County = county });
+                });
+
+                if (_jobs.ContainsKey(county))
+                {
+                    _jobs[county] = job;
+                }
+                else
+                {
+                    _jobs.Add(county, job);
+                }
             }
             return Task.CompletedTask;
         }
 
-        internal void OnJobFinished()
+        internal void OnJobFinished(JobFinishedEventArgs args)
         {
-            JobFinished?.Invoke(this, new EventArgs());
+            JobFinished?.Invoke(this, args);
         }
 
-        public void Cancel()
+        public void Cancel(string county)
         {
-            if (Running && _tokenSource != null)
+            if (Running(county) && _jobs[county].TokenSource != null)
             {
-                _tokenSource.Cancel();
+                _jobs[county].TokenSource.Cancel();
             }
         }
 
         public void Dispose()
         {
-            if (Running && _tokenSource != null)
+            foreach(var job in _jobs.Values)
             {
-                _tokenSource.Cancel();
+                if (job.Running && job.TokenSource != null)
+                {
+                    job.TokenSource.Cancel(); 
+                }
             }
         }
     }

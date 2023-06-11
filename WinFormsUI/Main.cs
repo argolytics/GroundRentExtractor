@@ -29,7 +29,7 @@ public partial class Main : Form
         services.AddBlazorWebViewDeveloperTools();
         // Extractor, ExtractController, and Data service factories
         services.AddTransient<IExceptionLogDataServiceFactory, ExceptionLogDataServiceFactory>();
-        services.AddTransient<ExtractController>();
+        services.AddSingleton<ExtractController>();
         services.AddTransient<Extractor>();
 
         services.AddAutoMapper(typeof(DataLibrary.AutoMapperEntryPoint).Assembly);

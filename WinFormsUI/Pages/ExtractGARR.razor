@@ -3,78 +3,15 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
 
-@if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxGARRProfilePath) ||
-String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))
-{
-    <div class="row mb-3 mt-3">
-        <div class="container">
-            <div>
-                Please enter path settings for Firefox Profile and/or Gecko Driver at <a href="Settings">Settings.</a>
-            </div>
-        </div>
-    </div>
-
-}
-else
-{
-    <div class="row mb-3 mt-3">
-        <div class="container">
-            <h3>GARR</h3>
-        </div>
-        <div class="container">
-            <div>
-                <EditForm Model="@Amount">
-                    <label>Amount</label>
-                    <InputNumber TValue="int" @bind-Value="@Amount" DisplayName="Amount">@Amount</InputNumber>
-                </EditForm>
-                <button class="btn btn-primary" type="submit" disabled="@(controller.Running)" @onclick="() => Extract(Amount)">Extract</button>
-                <button class="btn btn-danger" type="submit" disabled="@(!controller.Running)" @onclick="() => Quit()">Quit</button>
-            </div>
-        </div>
-    </div>
-}
-
-@code {
-    private int Amount { get; set; }
-
-    private async Task Extract(int amount)
-    {
-        GARRDataServiceFactory dataServiceFactory = new();
-        await controller.StartExtract(
-            extractor,
-            dataServiceFactory,
-            "GARR",
-            pathSettings.CurrentValue.FirefoxGARRProfilePath,
-            pathSettings.CurrentValue.GeckoDriverPath,
-            webPageStringSettings.CurrentValue.GARRDropDownSelect,
-            blobSettings.CurrentValue.GARRContainer,
-            Amount);
-        StateHasChanged();
-    }
-
-    private void Quit()
-    {
-        controller.Cancel();
-        StateHasChanged();
-    }
-
-    private void JobFinishedEventHandler(object sender, EventArgs args)
-    {
-        InvokeAsync(StateHasChanged);
-    }
-
-    protected override Task OnInitializedAsync()
-    {
-        Amount = razorPageSettings.CurrentValue.Amount;
-        this.controller.JobFinished += JobFinishedEventHandler;
-
-        return base.OnInitializedAsync();
-    }
-}
+<ExtractBase 
+    County="GARR" 
+    BlobContainer="@blobSettings.CurrentValue.GARRContainer" 
+    DataServiceFactory="@(new GARRDataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.GARRDropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxGARRProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
