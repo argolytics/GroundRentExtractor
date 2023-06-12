@@ -72,7 +72,7 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        Amount = razorPageSettings.CurrentValue.BACIBACOAmount;
+        Amount = razorPageSettings.CurrentValue.MajorAmount;
         this.controller.JobFinished += JobFinishedEventHandler;
 
         return base.OnInitializedAsync();
