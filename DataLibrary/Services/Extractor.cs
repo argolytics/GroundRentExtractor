@@ -7,6 +7,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using System.Diagnostics;
 
 namespace DataLibrary.Services;
 
@@ -43,6 +44,7 @@ public class Extractor
     private int totalCount = 0;
     private decimal elapsedTime = 0;
     private decimal accumulatedElapsedTime = 0;
+    private bool pdfLoaded;
 
     public Extractor(
         IDataContext dataContext,
@@ -344,8 +346,6 @@ public class Extractor
                                 // Click and open PDF
                                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
                                 Input.Click();
-                                // Switch to PDF window and, at any point within the try catch block, if 
-                                // the WebDriverTimeoutException occurs, catch it and break out of the foreach loop
                                 foreach (string window in FirefoxDriver.WindowHandles)
                                 {
                                     try
@@ -353,10 +353,12 @@ public class Extractor
                                         if (BaseUrlWindow != window)
                                         {
                                             FirefoxDriver.SwitchTo().Window(window);
-                                            IJavaScriptExecutor jsExecutor = FirefoxDriver;
-                                            if (WebDriverWait.Until(FirefoxDriver => jsExecutor.ExecuteScript("return document.readyState").Equals("complete")))
+                                            if (WebDriverWait.Until(FirefoxDriver => {
+                                                IJavaScriptExecutor jsExecutor = (IJavaScriptExecutor)FirefoxDriver;
+                                                var result = jsExecutor.ExecuteScript("return document.readyState;");
+                                                return result != null && result.Equals("complete");
+                                            }))
                                             {
-                                                // Upload PDF to blob storage
                                                 PrintOptions printOptions = new();
                                                 var printDocument = FirefoxDriver.Print(printOptions);
                                                 var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
@@ -376,7 +378,11 @@ public class Extractor
                                             }
                                             else
                                             {
-                                                // I've tried triggering this else condition, but the logic doesn't come here
+                                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
+                                                if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                                                FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                                continue;
                                             }
                                         }
                                         if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
