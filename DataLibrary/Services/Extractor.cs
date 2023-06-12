@@ -482,6 +482,8 @@ public class Extractor
             ReportTotals(stopWatch);
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
+            FirefoxDriver = null;
+            WebDriverWait = null;
         }
         catch (NoSuchWindowException e)
         {

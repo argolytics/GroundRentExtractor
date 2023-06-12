@@ -3,12 +3,18 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+<ExtractBase 
+    County="HOWA" 
+    BlobContainer="@blobSettings.CurrentValue.HOWAContainer" 
+    DataServiceFactory="@(new HOWADataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.HOWADropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxHOWAProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxHOWAProfilePath) ||
 String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

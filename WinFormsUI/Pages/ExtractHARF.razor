@@ -3,12 +3,18 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+<ExtractBase 
+    County="HARF" 
+    BlobContainer="@blobSettings.CurrentValue.HARFContainer" 
+    DataServiceFactory="@(new HARFDataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.HARFDropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxHARFProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxHARFProfilePath) ||
 String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

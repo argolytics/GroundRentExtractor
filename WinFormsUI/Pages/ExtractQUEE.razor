@@ -3,12 +3,18 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+<ExtractBase 
+    County="QUEE" 
+    BlobContainer="@blobSettings.CurrentValue.QUEEContainer" 
+    DataServiceFactory="@(new QUEEDataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.QUEEDropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxQUEEProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxQUEEProfilePath) ||
 String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

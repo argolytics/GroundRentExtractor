@@ -3,12 +3,18 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+<ExtractBase 
+    County="WICO" 
+    BlobContainer="@blobSettings.CurrentValue.WICOContainer" 
+    DataServiceFactory="@(new WICODataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.WICODropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxWICOProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxWICOProfilePath) ||
 String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

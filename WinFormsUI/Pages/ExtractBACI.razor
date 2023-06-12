@@ -1,14 +1,21 @@
-﻿@page "/extractBACI"
+@page "/extractBACI"
 @using DataLibrary.DbServices;
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+
+<ExtractBase 
+  County="BACI" 
+  BlobContainer="@blobSettings.CurrentValue.BACIContainer" 
+  DataServiceFactory="@(new BACIDataServiceFactory())" 
+  DropDownSelect="@webPageStringSettings.CurrentValue.BACIDropDownSelect"
+  FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxBACIProfilePath"
+  GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxBACIProfilePath) ||
  String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

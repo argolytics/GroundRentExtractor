@@ -3,12 +3,18 @@
 @using DataLibrary.Services
 @using DataLibrary.Settings;
 @using Microsoft.Extensions.Options;
-@inject ExtractController controller
-@inject Extractor extractor
 @inject IOptionsMonitor<DriverPathSettings> pathSettings
 @inject IOptionsMonitor<RazorPageSettings> razorPageSettings
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
+
+<ExtractBase 
+    County="TALB" 
+    BlobContainer="@blobSettings.CurrentValue.TALBContainer" 
+    DataServiceFactory="@(new TALBDataServiceFactory())" 
+    DropDownSelect="@webPageStringSettings.CurrentValue.TALBDropDownSelect"
+    FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxTALBProfilePath"
+    GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @if (String.IsNullOrEmpty(pathSettings.CurrentValue.FirefoxTALBProfilePath) ||
 String.IsNullOrEmpty(pathSettings.CurrentValue.GeckoDriverPath))

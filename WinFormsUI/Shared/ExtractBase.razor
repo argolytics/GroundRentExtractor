@@ -1,0 +1,91 @@
+﻿@using DataLibrary.DbServices;
+@using DataLibrary.Services;
+@using DataLibrary.Settings;
+@using Microsoft.Extensions.Options;
+@inject Extractor extractor
+@inject ExtractController controller
+@inject IOptionsMonitor<RazorPageSettings> razorPageSettings
+
+@if (String.IsNullOrEmpty(FirefoxProfilePath) ||
+String.IsNullOrEmpty(GeckoDriverPath))
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <div>
+                Please enter path settings for Firefox Profile and/or Gecko Driver at <a href="Settings">Settings.</a>
+            </div>
+        </div>
+    </div>
+
+}
+else
+{
+    <div class="row mb-3 mt-3">
+        <div class="container">
+            <h3>@County</h3>
+        </div>
+        <div class="container">
+            <div>
+                <EditForm Model="@Amount">
+                    <label>Amount</label>
+                    <InputNumber TValue="int" @bind-Value="@Amount" DisplayName="Amount">@Amount</InputNumber>
+                </EditForm>
+                <button class="btn btn-primary" type="submit" disabled="@(controller.Running(County))" @onclick="() => Extract(Amount)">Extract</button>
+                <button class="btn btn-danger" type="submit" disabled="@(!controller.Running(County))" @onclick="() => Quit()">Quit</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public string GeckoDriverPath { get; set; }
+    [Parameter]
+    public string FirefoxProfilePath { get; set; }
+    [Parameter]
+    public string DropDownSelect { get; set; }
+    [Parameter]
+    public string BlobContainer { get; set; }
+    [Parameter]
+    public string County { get; set; }
+    [Parameter]
+    public IDataServiceFactory DataServiceFactory { get; set; }
+
+    private int Amount { get; set; }
+
+    private async Task Extract(int amount)
+    {
+        await controller.StartExtract(
+            extractor,
+            DataServiceFactory,
+            County,
+            FirefoxProfilePath,
+            GeckoDriverPath,
+            DropDownSelect,
+            BlobContainer,
+            Amount);
+        StateHasChanged();
+    }
+
+    private void Quit()
+    {
+        controller.Cancel(County);
+        StateHasChanged();
+    }
+
+    private void JobFinishedEventHandler(object sender, JobFinishedEventArgs args)
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    protected override Task OnInitializedAsync()
+    {
+        Amount = razorPageSettings.CurrentValue.Amount;
+        this.controller.JobFinished += JobFinishedEventHandler;
+
+        return base.OnInitializedAsync();
+    }
+}
+
+@code {
+}
