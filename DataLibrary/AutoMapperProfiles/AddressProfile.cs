@@ -7,6 +7,6 @@ public class AddressProfile : Profile
 {
     public AddressProfile()
     {
-        CreateMap<AddressDto, AddressModel>();
+        CreateMap<AddressDto, GroundRentPropertyModel>();
     }
 }

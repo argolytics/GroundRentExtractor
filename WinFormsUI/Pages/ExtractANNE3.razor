@@ -1,4 +1,4 @@
-﻿@page "/extractHARF"
+﻿@page "/extractANNE3"
 @using DataLibrary.DbServices;
 @using DataLibrary.Services
 @using DataLibrary.Settings;
@@ -8,11 +8,11 @@
 @inject IOptionsMonitor<WebPageStringSettings> webPageStringSettings
 @inject IOptionsMonitor<BlobSettings> blobSettings
 
-<ExtractBase County="HARF"
+<ExtractBase County="ANNE3"
              BlobContainer="@blobSettings.CurrentValue.GroundRentPdfsContainer"
              DataServiceFactory="@(new GroundRentDataServiceFactory())"
-             DropDownSelect="@webPageStringSettings.CurrentValue.HARFDropDownSelect"
-             FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxHARFProfilePath"
+             DropDownSelect="@webPageStringSettings.CurrentValue.ANNEDropDownSelect"
+             FirefoxProfilePath="@pathSettings.CurrentValue.FirefoxANNE3ProfilePath"
              GeckoDriverPath="@pathSettings.CurrentValue.GeckoDriverPath" />
 
 @code {

@@ -26,11 +26,7 @@ else
         </div>
         <div class="container">
             <div>
-                <EditForm Model="@Amount">
-                    <label>Amount</label>
-                    <InputNumber TValue="int" @bind-Value="@Amount" DisplayName="Amount">@Amount</InputNumber>
-                </EditForm>
-                <button class="btn btn-primary" type="submit" disabled="@(controller.Running(County))" @onclick="() => Extract(Amount)">Extract</button>
+                <button class="btn btn-primary" type="submit" disabled="@(controller.Running(County))" @onclick="() => Extract()">Extract</button>
                 <button class="btn btn-danger" type="submit" disabled="@(!controller.Running(County))" @onclick="() => Quit()">Quit</button>
             </div>
         </div>
@@ -49,21 +45,19 @@ else
     [Parameter]
     public string County { get; set; }
     [Parameter]
-    public IDataServiceFactory DataServiceFactory { get; set; }
+    public IGroundRentDataServiceFactory DataServiceFactory { get; set; }
 
-    private int Amount { get; set; }
-
-    private async Task Extract(int amount)
+    private async Task Extract()
     {
         await controller.StartExtract(
             extractor,
             DataServiceFactory,
             County,
+            null,
             FirefoxProfilePath,
             GeckoDriverPath,
             DropDownSelect,
-            BlobContainer,
-            Amount);
+            BlobContainer);
         StateHasChanged();
     }
 
@@ -80,12 +74,7 @@ else
 
     protected override Task OnInitializedAsync()
     {
-        Amount = razorPageSettings.CurrentValue.Amount;
         this.controller.JobFinished += JobFinishedEventHandler;
-
         return base.OnInitializedAsync();
     }
-}
-
-@code {
 }

@@ -2,29 +2,16 @@
 
 public class WebPageStringSettings
 {
-    public string? ALLEDropDownSelect { get; set; }
     public string? ANNEDropDownSelect { get; set; }
     public string? BACIDropDownSelect { get; set; }
     public string? BACODropDownSelect { get; set; }
-    public string? CALVDropDownSelect { get; set; }
-    public string? CARODropDownSelect { get; set; }
     public string? CARRDropDownSelect { get; set; }
     public string? CECIDropDownSelect { get; set; }
     public string? CHARDropDownSelect { get; set; }
-    public string? DORCDropDownSelect { get; set; }
-    public string? FREDDropDownSelect { get; set; }
-    public string? GARRDropDownSelect { get; set; }
     public string? HARFDropDownSelect { get; set; }
     public string? HOWADropDownSelect { get; set; }
-    public string? KENTDropDownSelect { get; set; }
     public string? MONTDropDownSelect { get; set; }
     public string? PRINDropDownSelect { get; set; }
-    public string? QUEEDropDownSelect { get; set; }
-    public string? SOMEDropDownSelect { get; set; }
-    public string? STMADropDownSelect { get; set; }
-    public string? TALBDropDownSelect { get; set; }
-    public string? WASHDropDownSelect { get; set; }
-    public string? WICODropDownSelect { get; set; }
     public string? WORCDropDownSelect { get; set; }
     public string? PropertyAccountIdentifierSelect { get; set; }
     public string? ContinueClick { get; set; }

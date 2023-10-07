@@ -12,131 +12,23 @@
     <div class="column mb-3 mt-3">
         <div class="container mt-3">
             <div>
-                <button class="btn btn-primary" @onclick="LoadGeckoDriver">GeckoDriver</button>
+                <button class="btn btn-primary" @onclick="LoadGeckoDriver">Gecko Driver</button>
                 <label style="color:green">@pathSettings.CurrentValue.GeckoDriverPath</label>
                 <button class="btn btn-secondary" @onclick="ClearGeckoDriver">Clear</button>
             </div>
             <br />
             <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxALLEProfile">ALLE Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxALLEProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxALLEProfile">Clear</button> 
+                <button class="btn btn-primary" @onclick="LoadFirefoxBACI1Profile">BACI1 Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACI1ProfilePath</label>
+                <button class="btn btn-secondary" @onclick="ClearFirefoxBACI1Profile">Clear</button>
             </div>
+            
             <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxANNEProfile">ANNE Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxANNEProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxANNEProfile">Clear</button> 
+                <button class="btn btn-primary" @onclick="LoadFirefoxBACO1Profile">BACO1 Profile</button>
+                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACO1ProfilePath</label>
+                <button class="btn btn-secondary" @onclick="ClearFirefoxBACO1Profile">Clear</button>
             </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxBACIProfile">BACI Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACIProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxBACIProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxBACOProfile">BACO Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxBACOProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxBACOProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxCALVProfile">CALV Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxCALVProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxCALVProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxCAROProfile">CARO Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxCAROProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxCAROProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxCARRProfile">CARR Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxCARRProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxCARRProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxCECIProfile">CECI Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxCECIProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxCECIProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxCHARProfile">CHAR Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxCHARProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxCHARProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxDORCProfile">DORC Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxDORCProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxDORCProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxFREDProfile">FRED Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxFREDProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxFREDProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxGARRProfile">GARR Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxGARRProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxGARRProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxHARFProfile">HARF Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxHARFProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxHARFProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxHOWAProfile">HOWA Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxHOWAProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxHOWAProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxKENTProfile">KENT Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxKENTProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxKENTProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxMONTProfile">MONT Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxMONTProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxMONTProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxPRINProfile">PRIN Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxPRINProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxPRINProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxQUEEProfile">QUEE Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxQUEEProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxQUEEProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxSOMEProfile">SOME Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxSOMEProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxSOMEProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxSTMAProfile">STMA Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxSTMAProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxSTMAProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxTALBProfile">TALB Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxTALBProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxTALBProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxWASHProfile">WASH Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxWASHProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxWASHProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxWICOProfile">WICO Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxWICOProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxWICOProfile">Clear</button> 
-            </div>
-            <div>
-                <button class="btn btn-primary" @onclick="LoadFirefoxWORCProfile">WORC Profile</button>
-                <label style="color:green">@pathSettings.CurrentValue.FirefoxWORCProfilePath</label>
-                <button class="btn btn-secondary" @onclick="ClearFirefoxWORCProfile">Clear</button> 
-            </div>
+            
         </div>
     </div>
 </div>
@@ -181,31 +73,28 @@
             ErrorsList.Add(res.ToString());
         }
     }
-    private void LoadFirefoxALLEProfile() => LoadFirefoxProfile("ALLE");
-    private void LoadFirefoxANNEProfile() => LoadFirefoxProfile("ANNE");
-    private void LoadFirefoxBACIProfile() => LoadFirefoxProfile("BACI");
-    private void LoadFirefoxBACOProfile() => LoadFirefoxProfile("BACO");
-    private void LoadFirefoxCALVProfile() => LoadFirefoxProfile("CALV");
-    private void LoadFirefoxCAROProfile() => LoadFirefoxProfile("CARO");
-    private void LoadFirefoxCARRProfile() => LoadFirefoxProfile("CARR");
-    private void LoadFirefoxCECIProfile() => LoadFirefoxProfile("CECI");
-    private void LoadFirefoxCHARProfile() => LoadFirefoxProfile("CHAR");
-    private void LoadFirefoxDORCProfile() => LoadFirefoxProfile("DORC");
-    private void LoadFirefoxFREDProfile() => LoadFirefoxProfile("FRED");
-    private void LoadFirefoxGARRProfile() => LoadFirefoxProfile("GARR");
-    private void LoadFirefoxHARFProfile() => LoadFirefoxProfile("HARF");
-    private void LoadFirefoxHOWAProfile() => LoadFirefoxProfile("HOWA");
-    private void LoadFirefoxKENTProfile() => LoadFirefoxProfile("KENT");
-    private void LoadFirefoxMONTProfile() => LoadFirefoxProfile("MONT");
-    private void LoadFirefoxPRINProfile() => LoadFirefoxProfile("PRIN");
-    private void LoadFirefoxQUEEProfile() => LoadFirefoxProfile("QUEE");
-    private void LoadFirefoxSOMEProfile() => LoadFirefoxProfile("SOME");
-    private void LoadFirefoxSTMAProfile() => LoadFirefoxProfile("STMA");
-    private void LoadFirefoxTALBProfile() => LoadFirefoxProfile("TALB");
-    private void LoadFirefoxWASHProfile() => LoadFirefoxProfile("WASH");
-    private void LoadFirefoxWICOProfile() => LoadFirefoxProfile("WICO");
-    private void LoadFirefoxWORCProfile() => LoadFirefoxProfile("WORC");
-    private void LoadFirefoxProfile(string county)
+    private void LoadFirefoxANNE1Profile() => LoadFirefoxProfile("ANNE", "1");
+    private void LoadFirefoxANNE2Profile() => LoadFirefoxProfile("ANNE", "2");
+    private void LoadFirefoxANNE3Profile() => LoadFirefoxProfile("ANNE", "3");
+    private void LoadFirefoxBACI1Profile() => LoadFirefoxProfile("BACI", "1");
+    private void LoadFirefoxBACI2Profile() => LoadFirefoxProfile("BACI", "2");
+    private void LoadFirefoxBACI3Profile() => LoadFirefoxProfile("BACI", "3");
+    private void LoadFirefoxBACI4Profile() => LoadFirefoxProfile("BACI", "4");
+    private void LoadFirefoxBACI5Profile() => LoadFirefoxProfile("BACI", "5");
+    private void LoadFirefoxBACO1Profile() => LoadFirefoxProfile("BACO", "1");
+    private void LoadFirefoxBACO2Profile() => LoadFirefoxProfile("BACO", "2");
+    private void LoadFirefoxBACO3Profile() => LoadFirefoxProfile("BACO", "3");
+    private void LoadFirefoxBACO4Profile() => LoadFirefoxProfile("BACO", "4");
+    private void LoadFirefoxBACO5Profile() => LoadFirefoxProfile("BACO", "5");
+    private void LoadFirefoxCARRProfile() => LoadFirefoxProfile("CARR", "");
+    private void LoadFirefoxCECIProfile() => LoadFirefoxProfile("CECI", "");
+    private void LoadFirefoxCHARProfile() => LoadFirefoxProfile("CHAR", "");
+    private void LoadFirefoxHARFProfile() => LoadFirefoxProfile("HARF", "");
+    private void LoadFirefoxHOWAProfile() => LoadFirefoxProfile("HOWA", "");
+    private void LoadFirefoxMONTProfile() => LoadFirefoxProfile("MONT", "");
+    private void LoadFirefoxPRINProfile() => LoadFirefoxProfile("PRIN", "");
+    private void LoadFirefoxWORCProfile() => LoadFirefoxProfile("WORC", "");
+    private void LoadFirefoxProfile(string county, string number)
     {
         ErrorsList.Clear();
         FolderBrowserDialog folderBrowserDialog = new FolderBrowserDialog();
@@ -213,40 +102,37 @@
         DialogResult res = folderBrowserDialog.ShowDialog();
         if (res == DialogResult.OK)
         {
-            SettingsWriter.AddOrUpdateAppSetting($"DriverPathSettings:Firefox{county}ProfilePath", folderBrowserDialog.SelectedPath);
+            SettingsWriter.AddOrUpdateAppSetting($"DriverPathSettings:Firefox{county}{number}ProfilePath", folderBrowserDialog.SelectedPath);
         }
         else
         {
             ErrorsList.Add(res.ToString());
         }
     }
-    private void ClearFirefoxALLEProfile() => ClearFirefoxProfile("ALLE");
-    private void ClearFirefoxANNEProfile() => ClearFirefoxProfile("ANNE");
-    private void ClearFirefoxBACIProfile() => ClearFirefoxProfile("BACI");
-    private void ClearFirefoxBACOProfile() => ClearFirefoxProfile("BACO");
-    private void ClearFirefoxCALVProfile() => ClearFirefoxProfile("CALV");
-    private void ClearFirefoxCAROProfile() => ClearFirefoxProfile("CARO");
-    private void ClearFirefoxCARRProfile() => ClearFirefoxProfile("CARR");
-    private void ClearFirefoxCECIProfile() => ClearFirefoxProfile("CECI");
-    private void ClearFirefoxCHARProfile() => ClearFirefoxProfile("CHAR");
-    private void ClearFirefoxDORCProfile() => ClearFirefoxProfile("DORC");
-    private void ClearFirefoxFREDProfile() => ClearFirefoxProfile("FRED");
-    private void ClearFirefoxGARRProfile() => ClearFirefoxProfile("GARR");
-    private void ClearFirefoxHARFProfile() => ClearFirefoxProfile("HARF");
-    private void ClearFirefoxHOWAProfile() => ClearFirefoxProfile("HOWA");
-    private void ClearFirefoxKENTProfile() => ClearFirefoxProfile("KENT");
-    private void ClearFirefoxMONTProfile() => ClearFirefoxProfile("MONT");
-    private void ClearFirefoxPRINProfile() => ClearFirefoxProfile("PRIN");
-    private void ClearFirefoxQUEEProfile() => ClearFirefoxProfile("QUEE");
-    private void ClearFirefoxSOMEProfile() => ClearFirefoxProfile("SOME");
-    private void ClearFirefoxSTMAProfile() => ClearFirefoxProfile("STMA");
-    private void ClearFirefoxTALBProfile() => ClearFirefoxProfile("TALB");
-    private void ClearFirefoxWASHProfile() => ClearFirefoxProfile("WASH");
-    private void ClearFirefoxWICOProfile() => ClearFirefoxProfile("WICO");
-    private void ClearFirefoxWORCProfile() => ClearFirefoxProfile("WORC");
-    private void ClearFirefoxProfile(string county)
+    private void ClearFirefoxANNE1Profile() => ClearFirefoxProfile("ANNE", "1");
+    private void ClearFirefoxANNE2Profile() => ClearFirefoxProfile("ANNE", "2");
+    private void ClearFirefoxANNE3Profile() => ClearFirefoxProfile("ANNE", "3");
+    private void ClearFirefoxBACI1Profile() => ClearFirefoxProfile("BACI", "1");
+    private void ClearFirefoxBACI2Profile() => ClearFirefoxProfile("BACI", "2");
+    private void ClearFirefoxBACI3Profile() => ClearFirefoxProfile("BACI", "3");
+    private void ClearFirefoxBACI4Profile() => ClearFirefoxProfile("BACI", "4");
+    private void ClearFirefoxBACI5Profile() => ClearFirefoxProfile("BACI", "5");
+    private void ClearFirefoxBACO1Profile() => ClearFirefoxProfile("BACO", "1");
+    private void ClearFirefoxBACO2Profile() => ClearFirefoxProfile("BACO", "2");
+    private void ClearFirefoxBACO3Profile() => ClearFirefoxProfile("BACO", "3");
+    private void ClearFirefoxBACO4Profile() => ClearFirefoxProfile("BACO", "4");
+    private void ClearFirefoxBACO5Profile() => ClearFirefoxProfile("BACO", "5");
+    private void ClearFirefoxCARRProfile() => ClearFirefoxProfile("CARR", "");
+    private void ClearFirefoxCECIProfile() => ClearFirefoxProfile("CECI", "");
+    private void ClearFirefoxCHARProfile() => ClearFirefoxProfile("CHAR", "");
+    private void ClearFirefoxHARFProfile() => ClearFirefoxProfile("HARF", "");
+    private void ClearFirefoxHOWAProfile() => ClearFirefoxProfile("HOWA", "");
+    private void ClearFirefoxMONTProfile() => ClearFirefoxProfile("MONT", "");
+    private void ClearFirefoxPRINProfile() => ClearFirefoxProfile("PRIN", "");
+    private void ClearFirefoxWORCProfile() => ClearFirefoxProfile("WORC", "");
+    private void ClearFirefoxProfile(string county, string number)
     {
-        SettingsWriter.AddOrUpdateAppSetting($"DriverPathSettings:Firefox{county}ProfilePath", "");
+        SettingsWriter.AddOrUpdateAppSetting($"DriverPathSettings:Firefox{county}{number}ProfilePath", "");
     }
     private static class SettingsWriter
     {

@@ -28,7 +28,7 @@ public partial class Main : Form
         services.AddWindowsFormsBlazorWebView();
         services.AddBlazorWebViewDeveloperTools();
         // Extractor, ExtractController, and Data service factories
-        services.AddTransient<IExceptionLogDataServiceFactory, ExceptionLogDataServiceFactory>();
+        // services.AddTransient<IExceptionLogDataServiceFactory, ExceptionLogDataServiceFactory>();
         services.AddSingleton<ExtractController>();
         services.AddTransient<Extractor>();
 

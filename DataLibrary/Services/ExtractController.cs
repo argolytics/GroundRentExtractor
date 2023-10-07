@@ -20,13 +20,13 @@ namespace DataLibrary.Services
 
         public Task StartExtract(
             Extractor extractor,
-            IDataServiceFactory dataServiceFactory,
+            IGroundRentDataServiceFactory dataServiceFactory,
             string county,
+            int? amount,
             string firefoxDriverPath,
             string geckoDriverPath,
             string dropDownSelect,
-            string blobContainer,
-            int amount)
+            string blobContainer)
         {
             if (!_jobs.ContainsKey(county) || _jobs[county].Worker.IsCompleted)
             {
@@ -39,11 +39,11 @@ namespace DataLibrary.Services
                     await extractor.Extract(
                         dataServiceFactory,
                         county,
+                        amount,
                         firefoxDriverPath,
                         geckoDriverPath,
                         dropDownSelect,
                         blobContainer,
-                        amount,
                         job.TokenSource.Token);
                 });
                 job.Worker.ContinueWith((o) =>

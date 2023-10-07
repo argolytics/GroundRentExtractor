@@ -7,55 +7,42 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
-using System.Diagnostics;
 
 namespace DataLibrary.Services;
 
 public class Extractor
 {
     private readonly IDataContext _dataContext;
-    private IDataServiceFactory _dataServiceFactory;
-    private readonly IExceptionLogDataServiceFactory _exceptionLogDataServiceFactory;
+    private IGroundRentDataServiceFactory _dataServiceFactory;
     private readonly BlobService _blobService;
     private readonly IOptionsMonitor<WebPageStringSettings> _webPageStringSettings;
+    private readonly IOptionsMonitor<BlobSettings> _blobSettings;
     FirefoxDriver FirefoxDriver;
     WebDriverWait WebDriverWait;
     private IWebElement Input { get; set; }
-    private enum ExceptionLog
-    {
-        TransactionFailAddressNotGroundRent,
-        TransactionFailCouldNotStoreAddress,
-        TransactionFailCouldNotStoreMetadata,
-        TransactionFailCouldNotStorePdf,
-        TransactionFailCouldNotDeleteAddress,
-        DateTimeFiledIsNull
-    }
-    private string County;
     private string FirefoxDriverPath;
     private string GeckoDriverPath;
     private string DropDownSelect;
     private string BlobContainer;
     private string BaseUrlWindow;
-    private List<AddressModel> AddressList = new();
-    private bool? dbTransactionResultBool = null;
+    private List<GroundRentPropertyModel> AddressList = new();
     private int currentCount = 0;
     private int accumulatedCount = 0;
     private int remainingCount;
     private int totalCount = 0;
     private decimal elapsedTime = 0;
     private decimal accumulatedElapsedTime = 0;
-    private bool pdfLoaded;
 
     public Extractor(
         IDataContext dataContext,
-        IExceptionLogDataServiceFactory exceptionLogDataServiceFactory,
         BlobService blobService,
-        IOptionsMonitor<WebPageStringSettings> webPageStringSettings)
+        IOptionsMonitor<WebPageStringSettings> webPageStringSettings,
+        IOptionsMonitor<BlobSettings> blobSettings)
     {
         _dataContext = dataContext;
-        _exceptionLogDataServiceFactory = exceptionLogDataServiceFactory;
         _blobService = blobService;
         _webPageStringSettings = webPageStringSettings;
+        _blobSettings = blobSettings;
     }
 
     private void SetupDriver(string firefoxDriverPath, string geckoDriverPath)
@@ -65,13 +52,14 @@ public class Extractor
             if (!string.IsNullOrEmpty(firefoxDriverPath) && !string.IsNullOrEmpty(geckoDriverPath))
             {
                 FirefoxProfile firefoxProfile = new(firefoxDriverPath);
+                firefoxProfile.SetPreference("marionette", false);
                 FirefoxOptions FirefoxOptions = new()
                 {
-                    Profile = firefoxProfile,
+                    Profile = firefoxProfile
                 };
                 //firefoxOptions.AddArguments("--headless");
                 FirefoxDriver = new FirefoxDriver(geckoDriverPath, FirefoxOptions, TimeSpan.FromSeconds(60));
-                WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(10));
+                WebDriverWait = new(FirefoxDriver, TimeSpan.FromSeconds(19));
                 WebDriverWait.IgnoreExceptionTypes(
                     typeof(NoSuchElementException),
                     typeof(StaleElementReferenceException),
@@ -81,17 +69,17 @@ public class Extractor
         }
         catch (Exception ex)
         {
-            Serilog.Log.Error($"{County}: " + ex.ToString());
+            Serilog.Log.Error(ex.ToString());
         }
     }
     public async Task Extract(
-        IDataServiceFactory dataServiceFactory,
+        IGroundRentDataServiceFactory dataServiceFactory,
         string county,
+        int? amount,
         string firefoxDriverPath,
         string geckoDriverPath,
         string dropDownSelect,
         string blobContainer,
-        int count,
         CancellationToken cancellationToken)
     {
         if (FirefoxDriver == null && WebDriverWait == null)
@@ -99,7 +87,6 @@ public class Extractor
             SetupDriver(firefoxDriverPath, geckoDriverPath);
         }
         _dataServiceFactory = dataServiceFactory;
-        County = county;
         FirefoxDriverPath = firefoxDriverPath;
         GeckoDriverPath = geckoDriverPath;
         DropDownSelect = dropDownSelect;
@@ -109,10 +96,103 @@ public class Extractor
         // This if condition ensures the db will only be read once, otherwise use existing AddressList
         if (AddressList.Count == 0)
         {
-            using (var uow = _dataContext.CreateUnitOfWork())
+            if (county == "BACI1")
             {
-                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                AddressList = await dataService.ReadAddressTopAmountWhereIsGroundRentNull(count);
+                county = "BACI";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 100, 0);
+                }
+            }
+            else if (county == "BACI2")
+            {
+                county = "BACI";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 100, 100);
+                }
+            }
+            else if (county == "BACI3")
+            {
+                county = "BACI";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 100, 200);
+                }
+            }
+            else if (county == "BACI4")
+            {
+                county = "BACI";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 100, 300);
+                }
+            }
+            else if (county == "BACI5")
+            {
+                county = "BACI";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 100, 400);
+                }
+            }
+            else if (county == "BACO1")
+            {
+                county = "BACO";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 1000, 0);
+                }
+            }
+            else if (county == "BACO2")
+            {
+                county = "BACO";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 1000, 1000);
+                }
+            }
+            else if (county == "BACO3")
+            {
+                county = "BACO";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 1000, 2000);
+                }
+            }
+            else if (county == "BACO4")
+            {
+                county = "BACO";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 1000, 3000);
+                }
+            }
+            else if (county == "BACO5")
+            {
+                county = "BACO";
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCountyAndOffset(county, 1000, 4000);
+                }
+            }
+            else
+            {
+                using (var uow = _dataContext.CreateUnitOfWork())
+                {
+                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                    AddressList = await dataService.SelectGroundRentPropertyByCounty(county);
+                }
             }
         }
         // If after db read, all addresses for the county's db have been processed, the county is finished
@@ -120,9 +200,9 @@ public class Extractor
         {
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
-            Serilog.Log.Error($"{County} finished.");
+            Serilog.Log.Error($"All properties for {county} are finished.");
         }
-        totalCount = count + accumulatedCount;
+        totalCount = AddressList.Count + accumulatedCount;
         currentCount = 0;
         var stopWatch = ValueStopwatch.StartNew();
         try
@@ -141,11 +221,11 @@ public class Extractor
                 // Click Continue button
                 Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.CssSelector(_webPageStringSettings.CurrentValue.ContinueClick)));
                 Input.Click();
-                if (County == "ANNE")
+                if (county == "ANNE")
                 {
                     // Define Subdivision and ANNE-Specific AccountNumber
-                    string Subdivision = iterAddress.AccountNumber.Substring(0, 4).Trim();
-                    string AccountNumber = iterAddress.AccountNumber.Substring(4).Trim();
+                    string Subdivision = iterAddress.AccountNumber.Substring(0, 4);
+                    string AccountNumber = iterAddress.AccountNumber.Substring(4);
                     // Input District, Subdivision, and AccountNumber
                     Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.DistrictInput)));
                     Input.Clear();
@@ -157,7 +237,7 @@ public class Extractor
                     Input.Clear();
                     Input.SendKeys(AccountNumber);
                 }
-                else if (County == "BACI")
+                else if (county == "BACI")
                 {
                     // Input Ward, Section, Block, and Lot
                     Input = WebDriverWait.Until(ExpectedConditions.ElementExists(By.CssSelector(_webPageStringSettings.CurrentValue.WardInput)));
@@ -189,26 +269,8 @@ public class Extractor
                 // Check for any error labels
                 if (FirefoxDriver.FindElements(By.CssSelector(_webPageStringSettings.CurrentValue.GenericErrorTag)).Count != 0)
                 {
-                    // If address does not exist in SDAT
-                    if (FirefoxDriver.FindElement(By.CssSelector(_webPageStringSettings.CurrentValue.GenericErrorTag))
-                        .Text.Contains(_webPageStringSettings.CurrentValue.NoRecordsMessage))
-                    {
-                        using (var uow = _dataContext.CreateUnitOfWork())
-                        {
-                            var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                            dbTransactionResultBool = await dataService.DeleteAddress(iterAddress.AccountId);
-                        }
-                        currentCount++;
-                        AddressList.Remove(iterAddress);
-                    }
-                    // There must be an error tag that is different from the normal "no records exist" message
-                    else
-                    {
-                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
-                        Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotDeleteAddress.ToString());
-                    }
-                    currentCount++;
-                    AddressList.Remove(iterAddress);
+                    Serilog.Log.Error($"{iterAddress.AccountId} has error label in html even though it shouldn't.");
+                    FirefoxDriver.Quit();
                 }
                 // There are no error tags so we are free to check if address is fee simple or ground rent
                 else
@@ -223,47 +285,19 @@ public class Extractor
                         if (FirefoxDriver.FindElement(By.CssSelector(_webPageStringSettings.CurrentValue.GroundRentErrorTag))
                             .Text.Contains(_webPageStringSettings.CurrentValue.NoGroundRentMessage))
                         {
-                            // Property is not ground rent
-                            using (var uow = _dataContext.CreateUnitOfWork())
-                            {
-                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
-                                {
-                                    AccountId = iterAddress.AccountId,
-                                    County = iterAddress.County,
-                                    AccountNumber = iterAddress.AccountNumber,
-                                    Ward = iterAddress.Ward,
-                                    Section = iterAddress.Section,
-                                    Block = iterAddress.Block,
-                                    Lot = iterAddress.Lot,
-                                    LandUseCode = iterAddress.LandUseCode,
-                                    YearBuilt = iterAddress.YearBuilt,
-                                    IsGroundRent = false,
-                                    IsRedeemed = null,
-                                    PdfCount = null,
-                                    AllDataDownloaded = null
-                                });
-                            }
-                            if (dbTransactionResultBool is false)
-                            {
-                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailAddressNotGroundRent.ToString());
-                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailAddressNotGroundRent.ToString());
-                            }
+                            Serilog.Log.Error($"{iterAddress.AccountId} is not coming up as ground rent even though it should.");
+                            FirefoxDriver.Quit();
                         }
-                        currentCount++;
-                        AddressList.Remove(iterAddress);
                     }
                     // No ground rent error tag, therefore must be ground rent
                     else
                     {
-                        iterAddress.IsGroundRent = true;
                         // Load ground rent metadata table
                         WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(@_webPageStringSettings.CurrentValue.GroundRentMetadataTable)));
                         // Initialize variables keeping track of the total and current metadata collection count
                         var metadataCollectionCurrentCount = 0;
                         var pdfDownloadCount = 0;
                         var metadataCollectionTotalCount = FirefoxDriver.FindElements(By.XPath($@"{_webPageStringSettings.CurrentValue.GroundRentMetadataTable}/tbody/tr")).Count;
-                        List<GroundRentPdfModel> groundRentPdfModelList;
                         for (metadataCollectionCurrentCount = 0; metadataCollectionCurrentCount < metadataCollectionTotalCount;)
                         {
                             if (metadataCollectionCurrentCount == 0 ||
@@ -272,140 +306,92 @@ public class Extractor
                                 metadataCollectionCurrentCount++;
                                 continue;
                             }
+                            // Per iteration, reinitialize the metadata collection to avoid stale element exception
+                            WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(@_webPageStringSettings.CurrentValue.GroundRentMetadataTable)));
+                            IReadOnlyCollection<IWebElement> metadataCollection = FirefoxDriver.FindElements(By.XPath($@"{_webPageStringSettings.CurrentValue.GroundRentMetadataTable}/tbody/tr"));
+                            // Check if sql row for groundRentPdfModel already exists and if PdfDownloaded is true
+                            string acknowledgementNumber = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.AcknowledgementNumberTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                            using (var uow = _dataContext.CreateUnitOfWork())
                             {
-                                // Per iteration, reinitialize the metadata collection to avoid stale element exception
-                                WebDriverWait.Until(ExpectedConditions.PresenceOfAllElementsLocatedBy(By.XPath(@_webPageStringSettings.CurrentValue.GroundRentMetadataTable)));
-                                IReadOnlyCollection<IWebElement> metadataCollection = FirefoxDriver.FindElements(By.XPath($@"{_webPageStringSettings.CurrentValue.GroundRentMetadataTable}/tbody/tr"));
-                                // In case the previous groundRentModel (and corresponding PDF) didn't process correctly, we empty the list again
-                                groundRentPdfModelList = new();
-                                // Then add the model and initialize its various properties
-                                GroundRentPdfModel groundRentPdfModel = new();
-                                groundRentPdfModelList.Add(groundRentPdfModel);
-                                groundRentPdfModel.AddressId = iterAddress.Id;
-                                groundRentPdfModel.AccountId = iterAddress.AccountId;
-                                string? dateTimeFiledString = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DateTimeFiledTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
-                                // DateTimeFiled cannot be null since it is used as the sql table's Primary Key
-                                // so we check for null here. If null, we skip metadata and PDF download but make note in log
-                                if (dateTimeFiledString is null)
+                                var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                                if (await dataService.SelectBoolGroundRentPdfIfExists(acknowledgementNumber, iterAddress.AccountId).ConfigureAwait(false))
                                 {
-                                    await LogException(iterAddress.AccountId, ExceptionLog.DateTimeFiledIsNull.ToString());
-                                    Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.DateTimeFiledIsNull.ToString());
-                                    metadataCollectionCurrentCount++;
-                                    continue;
-                                }
-                                // Ensure there are always two digits for the month for a given date
-                                // so that DateTime.TryParse can parse dateTimeFiledString
-                                if (dateTimeFiledString[0] != '1')
-                                {
-                                    if (!dateTimeFiledString.StartsWith("1/")) dateTimeFiledString = '0' + dateTimeFiledString;
-                                }
-                                DateTime? DateTimeFiled = DateTime.TryParse(dateTimeFiledString, out DateTime tempDate) ? tempDate : null;
-                                groundRentPdfModel.DateTimeFiled = DateTimeFiled;
-                                groundRentPdfModel.DocumentFiledType = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DocumentFiledTypeTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
-                                groundRentPdfModel.AcknowledgementNumber = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.AcknowledgementNumberTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
-                                groundRentPdfModel.PdfPageCount = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.PdfPageCountTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
-                                string? deedReferenceData = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DeedReferenceTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
-                                var deedReferenceDataArray = deedReferenceData.Split('/') ?? null;
-                                groundRentPdfModel.Book = deedReferenceDataArray[0] ?? null;
-                                groundRentPdfModel.Page = deedReferenceDataArray[1] ?? null;
-                                groundRentPdfModel.ClerkInitials = deedReferenceDataArray[2] ?? null;
-                                int.TryParse(deedReferenceDataArray[3], out var yearRecordedResult);
-                                groundRentPdfModel.YearRecorded = yearRecordedResult;
-                                using (var uow = _dataContext.CreateUnitOfWork())
-                                {
-                                    var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                                    dbTransactionResultBool = await dataService.CreateGroundRentPdf(new GroundRentPdfModel()
+                                    // If the row exists and its PDF is already downloaded, we skip this iteration but still count the increments
+                                    GroundRentPdfModel? pdfModel = await dataService.SelectGroundRentPdf(acknowledgementNumber).ConfigureAwait(false);
+                                    if (pdfModel.PdfDownloaded is true)
                                     {
-                                        AccountId = groundRentPdfModel.AccountId,
-                                        AddressId = groundRentPdfModel.AddressId,
-                                        AcknowledgementNumber = groundRentPdfModel.AcknowledgementNumber,
-                                        DocumentFiledType = groundRentPdfModel.DocumentFiledType,
-                                        DateTimeFiled = groundRentPdfModel.DateTimeFiled,
-                                        PdfPageCount = groundRentPdfModel.PdfPageCount,
-                                        Book = groundRentPdfModel.Book,
-                                        Page = groundRentPdfModel.Page,
-                                        ClerkInitials = groundRentPdfModel.ClerkInitials,
-                                        YearRecorded = groundRentPdfModel.YearRecorded
-                                    });
-                                }
-                                if (dbTransactionResultBool is false)
-                                {
-                                    await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
-                                    Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreMetadata.ToString());
-                                    metadataCollectionCurrentCount++;
-                                    // If we cannot store metadata, we do not want the accompanying PDF, so we continue here
-                                    continue;
-                                }
-                                metadataCollectionCurrentCount++;
-                                foreach (string window in FirefoxDriver.WindowHandles)
-                                {
-                                    FirefoxDriver.SwitchTo().Window(window);
-                                    if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                }
-                                FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                                // Click and open PDF
-                                Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
-                                Input.Click();
-                                foreach (string window in FirefoxDriver.WindowHandles)
-                                {
-                                    try
-                                    {
-                                        if (BaseUrlWindow != window)
-                                        {
-                                            FirefoxDriver.SwitchTo().Window(window);
-                                            if (WebDriverWait.Until(FirefoxDriver => {
-                                                IJavaScriptExecutor jsExecutor = (IJavaScriptExecutor)FirefoxDriver;
-                                                var result = jsExecutor.ExecuteScript("return document.readyState;");
-                                                return result != null && result.Equals("complete");
-                                            }))
-                                            {
-                                                PrintOptions printOptions = new();
-                                                var printDocument = FirefoxDriver.Print(printOptions);
-                                                var accountIdTrimmed = groundRentPdfModel.AccountId.Trim();
-                                                var pdfFileName = $"{accountIdTrimmed}_{groundRentPdfModelList.FirstOrDefault().DocumentFiledType}_{groundRentPdfModelList.FirstOrDefault().AcknowledgementNumber}.pdf";
-                                                if (await _blobService.UploadBlob(pdfFileName, printDocument, blobContainer))
-                                                {
-                                                    pdfDownloadCount++;
-                                                }
-                                                else
-                                                {
-                                                    Serilog.Log.Information($"{County} accountId {iterAddress.AccountId}: {pdfFileName} already exists in the blob container.");
-                                                    if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                                    FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                                                    pdfDownloadCount++;
-                                                    continue;
-                                                }
-                                            }
-                                            else
-                                            {
-                                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                                if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                                FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                                                continue;
-                                            }
-                                        }
-                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                                    }
-                                    catch (WebDriverTimeoutException)
-                                    {
-                                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                        Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                                        continue;
-                                    }
-                                    catch (NullReferenceException)
-                                    {
-                                        await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                        Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStorePdf.ToString());
-                                        if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
-                                        FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
+                                        metadataCollectionCurrentCount++;
+                                        pdfDownloadCount++;
+                                        Serilog.Log.Information($"{iterAddress.AccountId} property for {acknowledgementNumber} already downloaded.");
                                         continue;
                                     }
                                 }
                             }
+                            // If this sql row doesn't exist, we collect pdf sql row data for a new pdfModel from the site's table's row
+                            string? dateTimeFiledString = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DateTimeFiledTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                            // Ensure there are always two digits for the month for a given date so that DateTime.TryParse can parse dateTimeFiledString
+                            if (dateTimeFiledString[0] != '1') if (!dateTimeFiledString.StartsWith("1/")) dateTimeFiledString = '0' + dateTimeFiledString;
+                            DateTime? dateTimeFiled = DateTime.TryParse(dateTimeFiledString, out DateTime tempDate) ? tempDate : null;
+                            string? documentFiledType = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DocumentFiledTypeTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                            string? pdfPageCount = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.PdfPageCountTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                            string? deedReferenceData = metadataCollection.ElementAt(metadataCollectionCurrentCount).FindElement(By.CssSelector($"{_webPageStringSettings.CurrentValue.DeedReferenceTag}_{metadataCollectionCurrentCount - 1}")).Text ?? null;
+                            string[]? deedReferenceDataArray = deedReferenceData.Split('/') ?? null;
+                            int.TryParse(deedReferenceDataArray[3], out var yearRecordedResult);
+                            // With all data populated, we can safely increment the metadata count
+                            metadataCollectionCurrentCount++;
+                            // Click PDF link and open PDF window
+                            Input = WebDriverWait.Until(ExpectedConditions.ElementToBeClickable(By.Id(metadataCollection.ElementAt(metadataCollectionCurrentCount - 1).FindElement(By.TagName("a")).GetAttribute("id"))));
+                            Input.Click();
+                            foreach (string window in FirefoxDriver.WindowHandles)
+                            {
+                                if (BaseUrlWindow != window) FirefoxDriver.SwitchTo().Window(window);
+                            }
+                            // Download PDF
+                            if (WebDriverWait.Until(FirefoxDriver =>
+                            {
+                                IJavaScriptExecutor jsExecutor = (IJavaScriptExecutor)FirefoxDriver;
+                                var result = jsExecutor.ExecuteScript("return document.readyState;");
+                                return result != null && result.Equals("complete");
+                            }))
+                            {
+                                PrintOptions printOptions = new();
+                                var printDocument = FirefoxDriver.Print(printOptions);
+                                var blobName = $"{county}/{iterAddress.AccountId}/{documentFiledType}_{acknowledgementNumber}.pdf";
+                                bool pdfDownloaded = await _blobService.UploadBlob(blobName, printDocument, blobContainer).ConfigureAwait(false);
+                                if (pdfDownloaded) pdfDownloadCount++;
+                                using (var uow = _dataContext.CreateUnitOfWork())
+                                {
+                                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                                    if (await dataService.CreateOrUpdateGroundRentPdf(new GroundRentPdfModel()
+                                    {
+                                        AddressId = iterAddress.Id,
+                                        AccountId = iterAddress.AccountId,
+                                        AcknowledgementNumber = acknowledgementNumber,
+                                        DateTimeFiled = dateTimeFiled,
+                                        DocumentFiledType = documentFiledType,
+                                        PdfPageCount = pdfPageCount,
+                                        Book = deedReferenceDataArray[0] ?? null,
+                                        Page = deedReferenceDataArray[1] ?? null,
+                                        ClerkInitials = deedReferenceDataArray[2] ?? null,
+                                        YearRecorded = yearRecordedResult,
+                                        PdfDownloaded = pdfDownloaded
+                                    }).ConfigureAwait(false)) { }
+                                    else Serilog.Log.Error($"{iterAddress.AccountId} for PDF {documentFiledType}_{acknowledgementNumber} could not be created.");
+                                }
+                                // The row we just created is now read for so we can get access to its [Id] as one of the blob tags
+                                GroundRentPdfModel pdfModelJustCreatedOrUpdatedButNowWithId = new();
+                                using (var uow = _dataContext.CreateUnitOfWork())
+                                {
+                                    var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                                    pdfModelJustCreatedOrUpdatedButNowWithId = await dataService.SelectGroundRentPdf(acknowledgementNumber).ConfigureAwait(false);
+                                }
+                                // A blob can only be tagged after its been uploaded, so we do so here
+                                _blobService.TagBlob(blobName, iterAddress, pdfModelJustCreatedOrUpdatedButNowWithId, _blobSettings.CurrentValue.GroundRentPdfsContainer);
+                                // Close out the PDF window and switch back to the baseUrlWindow
+                            }
+                            else { Serilog.Log.Error($"{iterAddress.AccountId} property for PDF {acknowledgementNumber} could not be downloaded."); }
+                            if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
+                            FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
                         }
                         foreach (string window in FirefoxDriver.WindowHandles)
                         {
@@ -413,71 +399,34 @@ public class Extractor
                             if (FirefoxDriver.CurrentWindowHandle != BaseUrlWindow) FirefoxDriver.Close();
                         }
                         FirefoxDriver.SwitchTo().Window(BaseUrlWindow);
-                        // Check if all PDFs have been downloaded by checking against the true amount of metadata table rows
-                        var pdfTotalCount = metadataCollectionTotalCount - 2;
-                        if (pdfDownloadCount == pdfTotalCount)
+                        // Check if total PDF count (as measured by the amount of rows in the table minus two) matches the actual count
+                        bool pdfsDownloaded = pdfDownloadCount == metadataCollectionTotalCount - 2;
+                        using (var uow = _dataContext.CreateUnitOfWork())
                         {
-                            using (var uow = _dataContext.CreateUnitOfWork())
+                            var dataService = _dataServiceFactory.CreateGroundRentDataService(uow);
+                            if (await dataService.UpdateGroundRentProperty(new GroundRentPropertyModel()
                             {
-                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
-                                {
-                                    AccountId = iterAddress.AccountId,
-                                    County = iterAddress.County,
-                                    AccountNumber = iterAddress.AccountNumber,
-                                    Ward = iterAddress.Ward,
-                                    Section = iterAddress.Section,
-                                    Block = iterAddress.Block,
-                                    Lot = iterAddress.Lot,
-                                    LandUseCode = iterAddress.LandUseCode,
-                                    YearBuilt = iterAddress.YearBuilt,
-                                    IsGroundRent = true,
-                                    IsRedeemed = iterAddress.IsRedeemed,
-                                    PdfCount = pdfTotalCount,
-                                    AllDataDownloaded = true
-                                });
-                            }
-                            if (dbTransactionResultBool is false)
-                            {
-                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
-                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
-                            }
-                        }
-                        // PDF download count or metadata collection current are not count equal to PDF total count
-                        else
-                        {
-                            using (var uow = _dataContext.CreateUnitOfWork())
-                            {
-                                var dataService = _dataServiceFactory.CreateExtractorDataService(uow);
-                                dbTransactionResultBool = await dataService.UpdateAddress(new AddressModel()
-                                {
-                                    AccountId = iterAddress.AccountId,
-                                    County = iterAddress.County,
-                                    AccountNumber = iterAddress.AccountNumber,
-                                    Ward = iterAddress.Ward,
-                                    Section = iterAddress.Section,
-                                    Block = iterAddress.Block,
-                                    Lot = iterAddress.Lot,
-                                    LandUseCode = iterAddress.LandUseCode,
-                                    YearBuilt = iterAddress.YearBuilt,
-                                    IsGroundRent = true,
-                                    IsRedeemed = iterAddress.IsRedeemed,
-                                    PdfCount = pdfTotalCount,
-                                    AllDataDownloaded = false
-                                });
-                            }
-                            if (dbTransactionResultBool is false)
-                            {
-                                await LogException(iterAddress.AccountId, ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
-                                Serilog.Log.Error($"{County} accountId {iterAddress.AccountId}: " + ExceptionLog.TransactionFailCouldNotStoreAddress.ToString());
-                            }
+                                AccountId = iterAddress.AccountId,
+                                County = iterAddress.County,
+                                AccountNumber = iterAddress.AccountNumber,
+                                Ward = iterAddress.Ward,
+                                Section = iterAddress.Section,
+                                Block = iterAddress.Block,
+                                Lot = iterAddress.Lot,
+                                LandUseCode = iterAddress.LandUseCode,
+                                YearBuilt = iterAddress.YearBuilt,
+                                PdfCount = metadataCollectionTotalCount - 2,
+                                IsRedeemed = iterAddress.IsRedeemed,
+                                PdfsDownloaded = pdfsDownloaded
+                            }).ConfigureAwait(false)) { }
+                            else Serilog.Log.Error($"{iterAddress.AccountId} could not be updated.");
                         }
                         currentCount++;
                         AddressList.Remove(iterAddress);
                     }
                 }
             }
-            Serilog.Log.Information($"{County}: batch complete.");
+            Serilog.Log.Information($"{county}: batch complete.");
             accumulatedCount += currentCount;
             ReportTotals(stopWatch);
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
@@ -487,7 +436,7 @@ public class Extractor
         }
         catch (NoSuchWindowException e)
         {
-            Serilog.Log.Error($"{County} critical exception: {e.Message}. Quitting.");
+            Serilog.Log.Error($"{county} critical exception: {e.Message}. Quitting.");
             accumulatedCount += currentCount;
             remainingCount = totalCount - accumulatedCount;
             AddressList.Clear();
@@ -497,7 +446,7 @@ public class Extractor
         }
         catch (ObjectDisposedException e)
         {
-            Serilog.Log.Error($"{County} critical exception: {e.Message}. Quitting.");
+            Serilog.Log.Error($"{county} critical exception: {e.Message}. Quitting.");
             accumulatedCount += currentCount;
             remainingCount = totalCount - accumulatedCount;
             AddressList.Clear();
@@ -505,13 +454,41 @@ public class Extractor
             foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
             FirefoxDriver.Quit();
         }
-        catch (Exception e)
+        catch (WebDriverException e)
         {
-            Serilog.Log.Error($"{County} exception: {e.Message}. Restarting.");
+            Serilog.Log.Error($"{county} critical exception: {e.Message}. Quitting.");
+            accumulatedCount += currentCount;
+            remainingCount = totalCount - accumulatedCount;
+            AddressList.Clear();
+            ReportTotals(stopWatch);
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
+            FirefoxDriver.Quit();
+        }
+        catch (System.Net.WebException e)
+        {
+            Serilog.Log.Error($"{county} critical exception: {e.Message}. Quitting.");
+            accumulatedCount += currentCount;
+            remainingCount = totalCount - accumulatedCount;
+            AddressList.Clear();
+            ReportTotals(stopWatch);
+            foreach (string window in FirefoxDriver.WindowHandles) FirefoxDriver.Close();
+            FirefoxDriver.Quit();
+        }
+        catch (TimeoutException e)
+        {
+            Serilog.Log.Information($"{county} exception: {e.Message}. Restarting.");
             accumulatedCount += currentCount;
             remainingCount = totalCount - accumulatedCount;
             ReportTotals(stopWatch);
-            await RestartExtract(remainingCount, cancellationToken);
+            await RestartExtract(remainingCount, county, cancellationToken);
+        }
+        catch (Exception e)
+        {
+            Serilog.Log.Error($"{county} exception: {e.Message}. Restarting.");
+            accumulatedCount += currentCount;
+            remainingCount = totalCount - accumulatedCount;
+            ReportTotals(stopWatch);
+            await RestartExtract(remainingCount, county, cancellationToken);
         }
     }
     private void ReportTotals(ValueStopwatch stopWatch)
@@ -519,18 +496,18 @@ public class Extractor
         accumulatedElapsedTime = CalculateElapsedTime(stopWatch);
         var percentComplete = totalCount == 0 ? 0 : decimal.Divide(accumulatedCount, totalCount);
         var addressesProcessedPerMinute = (int)decimal.Divide(accumulatedCount, accumulatedElapsedTime);
-        Serilog.Log.Information($"{County}: {percentComplete:P0} of {totalCount} completed. {addressesProcessedPerMinute} average per minute.");
+        Serilog.Log.Information($"{percentComplete:P0} of {totalCount} completed. {addressesProcessedPerMinute} average per minute.");
     }
-    private async Task RestartExtract(int count, CancellationToken cancellationToken)
+    private async Task RestartExtract(int remainingCount, string county, CancellationToken cancellationToken)
     {
         await Extract(
             _dataServiceFactory,
-            County,
+            county,
+            remainingCount,
             FirefoxDriverPath,
             GeckoDriverPath,
             DropDownSelect,
             BlobContainer,
-            count,
             cancellationToken);
     }
     private decimal CalculateElapsedTime(ValueStopwatch stopWatch)
@@ -538,18 +515,5 @@ public class Extractor
         elapsedTime = (decimal)stopWatch.GetElapsedTime().TotalMinutes;
         accumulatedElapsedTime += elapsedTime;
         return accumulatedElapsedTime;
-    }
-    public async Task LogException(string accountId, string exception)
-    {
-        ExceptionLogModel exceptionLogModel = new()
-        {
-            AccountId = accountId,
-            Exception = exception
-        };
-        using (var uow = _dataContext.CreateUnitOfWork())
-        {
-            var exceptionLogDataService = _exceptionLogDataServiceFactory.CreateExceptionLogDataService(uow);
-            await exceptionLogDataService.Create(exceptionLogModel);
-        }
     }
 }
